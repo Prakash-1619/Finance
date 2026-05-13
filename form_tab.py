@@ -113,7 +113,7 @@ def render_form_tab(csv_file):
                     "Date": entry_date, "Transaction Type": trans_type, "Currency": currency,
                     "Payment Status": payment_status, "Amount": amount, "Frequency": frequency,
                     "Payment App": pay_app, "Phone Number": phone_num, "Bank Name": bank_name,
-                    "Person/Org Name": person_org, "Domain": domain, "Sub-Category": sub_category,
+                    "Person/Org Name": person_org,"Org Name": org_name,  "Domain": domain, "Sub-Category": sub_category,
                     "Description": desc, "Extra Details": json.dumps(extra)
                 }])
                 new_data.to_csv(csv_file, mode='a', header=False, index=False)
