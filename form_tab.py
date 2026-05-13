@@ -12,13 +12,6 @@ def render_form_tab(csv_file):
         
     with form_tabs[0]:
         
-        # --- SUCCESS MESSAGE HANDLER ---
-        # Checks if a success message exists in session state from a previous save
-        if 'save_success' in st.session_state:
-            st.success(st.session_state['save_success'])
-            # Delete it immediately so it doesn't show up again on the next normal refresh
-            del st.session_state['save_success']
-
         st.subheader("Add New Transaction")
         
         # --- 1. CORE TRANSACTION DETAILS ---
@@ -119,12 +112,24 @@ def render_form_tab(csv_file):
         # --- SUBMIT & CONFIRMATION LOGIC ---
         st.markdown("### 💾 Finalize Entry")
         
-        # Checkbox to unlock the save button
-        confirm = st.checkbox("I confirm that the details entered above are accurate.")
+        # Checkbox with a unique session_state key
+        confirm = st.checkbox("I confirm that the details entered above are accurate.", key="confirm_save")
 
-        # --- SUBMIT ---
-        # Button is disabled until 'confirm' is checked
-        if st.button("💾 Save Record", type="primary", use_container_width=True, disabled=not confirm):
+        # Side-by-side layout for the button and the success message
+        action_col, msg_col = st.columns([1, 2])
+
+        with action_col:
+            # Button is disabled until 'confirm' is checked
+            save_clicked = st.button("💾 Save Record", type="primary", use_container_width=True, disabled=not confirm)
+
+        with msg_col:
+            # Display success message right next to the button, then immediately clear it from memory
+            if 'save_success' in st.session_state:
+                st.success(st.session_state['save_success'])
+                del st.session_state['save_success']
+
+        # --- SAVE PROCESSING ---
+        if save_clicked:
             if amount <= 0 and trans_type not in ["Loans", "EMI"]:
                 st.error("Please enter a valid amount.")
             else:
@@ -138,8 +143,11 @@ def render_form_tab(csv_file):
                 
                 new_data.to_csv(csv_file, mode='a', header=False, index=False)
                 
-                # Set the persistent success message
+                # Setup success message for the next run
                 st.session_state['save_success'] = f"✅ Successfully added ₹{amount} to {domain}!"
                 
-                # Refresh the app immediately to lock the button and clear the form
+                # Uncheck the confirmation box automatically
+                st.session_state['confirm_save'] = False
+                
+                # Trigger refresh
                 st.rerun()
