@@ -11,6 +11,14 @@ def render_form_tab(csv_file):
         st.info("Service form fields will go here in the future.")
         
     with form_tabs[0]:
+        
+        # --- SUCCESS MESSAGE HANDLER ---
+        # Checks if a success message exists in session state from a previous save
+        if 'save_success' in st.session_state:
+            st.success(st.session_state['save_success'])
+            # Delete it immediately so it doesn't show up again on the next normal refresh
+            del st.session_state['save_success']
+
         st.subheader("Add New Transaction")
         
         # --- 1. CORE TRANSACTION DETAILS ---
@@ -36,7 +44,7 @@ def render_form_tab(csv_file):
         with p_col1:
             person_org = st.text_input("Person Name")
         with p_col2:
-            org_name = st.text_input(" Organization Name")
+            org_name = st.text_input("Organization Name")
         with p_col3:
             desc = st.text_input("Brief Description / Purpose")
             
@@ -106,8 +114,17 @@ def render_form_tab(csv_file):
             extra["Next Due Date"] = str(st.date_input("Next EMI Due Date", date.today()))
             extra["Tenure Remaining"] = st.text_input("Months Remaining")
 
+        st.divider()
+
+        # --- SUBMIT & CONFIRMATION LOGIC ---
+        st.markdown("### 💾 Finalize Entry")
+        
+        # Checkbox to unlock the save button
+        confirm = st.checkbox("I confirm that the details entered above are accurate.")
+
         # --- SUBMIT ---
-        if st.button("💾 Save Record", type="primary", use_container_width=True):
+        # Button is disabled until 'confirm' is checked
+        if st.button("💾 Save Record", type="primary", use_container_width=True, disabled=not confirm):
             if amount <= 0 and trans_type not in ["Loans", "EMI"]:
                 st.error("Please enter a valid amount.")
             else:
@@ -115,9 +132,14 @@ def render_form_tab(csv_file):
                     "Date": entry_date, "Transaction Type": trans_type, "Currency": currency,
                     "Payment Status": payment_status, "Amount": amount, "Frequency": frequency,
                     "Payment App": pay_app, "Phone Number": phone_num, "Bank Name": bank_name,
-                    "Person/Org Name": person_org,"Org Name": org_name,  "Domain": domain, "Sub-Category": sub_category,
+                    "Person/Org Name": person_org, "Org Name": org_name, "Domain": domain, "Sub-Category": sub_category,
                     "Description": desc, "Extra Details": json.dumps(extra)
                 }])
+                
                 new_data.to_csv(csv_file, mode='a', header=False, index=False)
-                st.success(f"✅ Record Saved to {domain} successfully!")
+                
+                # Set the persistent success message
+                st.session_state['save_success'] = f"✅ Successfully added ₹{amount} to {domain}!"
+                
+                # Refresh the app immediately to lock the button and clear the form
                 st.rerun()
