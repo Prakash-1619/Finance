@@ -34,8 +34,10 @@ def render_form_tab(csv_file):
         st.markdown("**Entities & Description**")
         p_col1, p_col2 = st.columns(2)
         with p_col1:
-            person_org = st.text_input("Person or Organization Name")
+            person_org = st.text_input("Person Name")
         with p_col2:
+            org_name = st.text_input(" Organization Name")
+        with p_col3:
             desc = st.text_input("Brief Description / Purpose")
             
         st.divider()
