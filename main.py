@@ -1,6 +1,13 @@
 import streamlit as st
 import pandas as pd
+import pandas as pd
 
+# Load the data before creating the tabs!
+try:
+    df = pd.read_csv('data.csv') 
+except FileNotFoundError:
+    # Handle the case where the file doesn't exist yet
+    df = pd.DataFrame()
 # --- PAGE CONFIGURATION & PREMIUM THEME ---
 st.set_page_config(page_title="FinTrack Premium", page_icon="🏦", layout="wide")
 
