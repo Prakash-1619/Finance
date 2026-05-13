@@ -13,7 +13,7 @@ def get_clean_data(df):
     extras_df.index = df.index 
     return pd.concat([df.drop(columns=['Extra Details']), extras_df], axis=1)
 
-# --- HELPER: Advanced Filter Engine (Applies to Charts & Tables) ---
+# --- HELPER: Advanced Filter Engine ---
 def apply_dynamic_filters(df, prefix_key):
     if df.empty: return df
     st.markdown(f"###### 🔎 Dynamic Filters")
@@ -55,11 +55,15 @@ def render_delete_interface(df_subset, csv_file, domain_name):
 
 # --- MAIN RENDER FUNCTION ---
 def render_funds_tab(csv_file):
+    # ==========================================
+    # FIX: Enhanced Error Catching
+    # ==========================================
     try:
         df_raw = pd.read_csv(csv_file)
         if not df_raw.empty: df_raw['Date'] = pd.to_datetime(df_raw['Date']).dt.date
-    except Exception:
-        st.error("⚠️ Data file corrupted or missing.")
+    except Exception as e:
+        st.error(f"⚠️ Data file error: {e}")
+        st.info("💡 Tip: If you recently added new columns to your form, you must delete 'data.csv' and let the app regenerate it.")
         return
 
     if df_raw.empty:
@@ -103,7 +107,6 @@ def render_funds_tab(csv_file):
         clean_master = get_clean_data(df)
         filtered_global = apply_dynamic_filters(clean_master, "global")
         
-        # KPIs based on Filtered Data
         income = filtered_global[filtered_global['Transaction Type'] == 'Received']['Amount'].sum()
         expense = filtered_global[filtered_global['Transaction Type'] == 'Paid']['Amount'].sum()
         
@@ -114,7 +117,6 @@ def render_funds_tab(csv_file):
 
         st.divider()
         
-        # Row 1: Pie Charts
         p_col1, p_col2 = st.columns(2)
         with p_col1:
             st.markdown("**Income by Domain**")
@@ -130,7 +132,6 @@ def render_funds_tab(csv_file):
                 st.plotly_chart(px.pie(exp_df, values='Amount', names='Domain', hole=0.4, template="plotly_white"), use_container_width=True)
             else: st.info("No expense data.")
 
-        # Row 2: Trend Lines
         t_col1, t_col2 = st.columns(2)
         with t_col1:
             st.markdown("**Daily Cashflow Timeline**")
@@ -189,13 +190,11 @@ def render_funds_tab(csv_file):
                 st.info(f"No records for {domain_name}.")
                 return
 
-            # Apply domain-wide filter first so everything below updates
             clean_dom = get_clean_data(domain_df)
             filt_dom = apply_dynamic_filters(clean_dom, f"dom_{domain_name}")
             
             sub_tabs = st.tabs(["📊 Section Balance", "🟥 Paid (Expense)", "🟩 Received (Income)", "⚙️ Manage & Delete"])
             
-            # SUB-TAB: BALANCE
             with sub_tabs[0]:
                 d_in = filt_dom[filt_dom['Transaction Type'] == 'Received']['Amount'].sum()
                 d_out = filt_dom[filt_dom['Transaction Type'] == 'Paid']['Amount'].sum()
@@ -208,7 +207,6 @@ def render_funds_tab(csv_file):
                     summary = filt_dom.groupby(['Sub-Category', 'Transaction Type'])['Amount'].sum().reset_index()
                     st.plotly_chart(px.bar(summary, x='Sub-Category', y='Amount', color='Transaction Type', barmode='group', template="plotly_white"), use_container_width=True)
 
-            # SUB-TAB: PAID
             with sub_tabs[1]:
                 s_paid = filt_dom[filt_dom['Transaction Type'] == 'Paid']
                 if not s_paid.empty:
@@ -217,7 +215,6 @@ def render_funds_tab(csv_file):
                     st.dataframe(s_paid.sort_values('Date', ascending=False), use_container_width=True)
                 else: st.write("No paid records.")
 
-            # SUB-TAB: RECEIVED
             with sub_tabs[2]:
                 s_rec = filt_dom[filt_dom['Transaction Type'] == 'Received']
                 if not s_rec.empty:
@@ -226,12 +223,9 @@ def render_funds_tab(csv_file):
                     st.dataframe(s_rec.sort_values('Date', ascending=False), use_container_width=True)
                 else: st.write("No received records.")
 
-            # SUB-TAB: DELETE
             with sub_tabs[3]:
-                # We pass the raw domain_df here (unfiltered) so indexes align perfectly for deletion
                 render_delete_interface(domain_df, csv_file, domain_name)
 
-    # Render Domain Tabs
     render_domain_dashboard("Car", tabs[4])
     render_domain_dashboard("Sheep", tabs[5])
     render_domain_dashboard("Agri Land", tabs[6])
