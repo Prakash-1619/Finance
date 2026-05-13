@@ -16,7 +16,7 @@ def render_funds_tab(csv_file):
         return
 
     # Convert Date column to datetime for filtering
-    df['Date'] = pd.to_datetime(df['Date'])
+    df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
 
     # --- FILTERS ---
     st.subheader("Filters")
