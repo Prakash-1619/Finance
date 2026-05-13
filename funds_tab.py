@@ -56,7 +56,7 @@ def render_delete_interface(df_subset, domain_name):
                 st.success("✅ Record successfully deleted from GitHub!")
                 st.rerun()
 
-def render_funds_tab():
+def render_funds_tab(data): # It's expecting 'data' here
     # Load directly from GitHub
     df_raw = load_data()
 
