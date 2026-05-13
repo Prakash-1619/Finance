@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import os
 
 # --- PAGE CONFIGURATION & PREMIUM THEME ---
 st.set_page_config(page_title="FinTrack Premium", page_icon="🏦", layout="wide")
@@ -20,23 +19,11 @@ from form_tab import render_form_tab
 from funds_tab import render_funds_tab
 from service_tab import render_service_tab
 
-# ==========================================
-# FIX: Added "Org Name" to match your form
-# ==========================================
-CSV_FILE = "data.csv"
-if not os.path.exists(CSV_FILE):
-    df = pd.DataFrame(columns=[
-        "Date", "Transaction Type", "Currency", "Payment Status", "Amount", 
-        "Frequency", "Payment App", "Phone Number", "Bank Name", 
-        "Person/Org Name", "Org Name", "Domain", "Sub-Category", 
-        "Description", "Extra Details"
-    ])
-    df.to_csv(CSV_FILE, index=False)
-
 st.title("🏦 Asset & Finance Portfolio")
 
 main_tabs = st.tabs(["📝 Data Entry Form", "📈 Funds Dashboard", "🛠️ Service"])
 
-with main_tabs[0]: render_form_tab(CSV_FILE)
-with main_tabs[1]: render_funds_tab(CSV_FILE)
+# We no longer pass CSV_FILE path, everything routes through github_sync now
+with main_tabs[0]: render_form_tab()
+with main_tabs[1]: render_funds_tab()
 with main_tabs[2]: render_service_tab()
