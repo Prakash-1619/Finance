@@ -11,7 +11,6 @@ def render_form_tab(csv_file):
         st.info("Service form fields will go here in the future.")
         
     with form_tabs[0]:
-        
         st.subheader("Add New Transaction")
         
         # --- 1. CORE TRANSACTION DETAILS ---
@@ -112,26 +111,25 @@ def render_form_tab(csv_file):
         # --- SUBMIT & CONFIRMATION LOGIC ---
         st.markdown("### 💾 Finalize Entry")
         
-        # Checkbox with a unique session_state key
+        # 1. Define the callback function
+        def reset_form():
+            st.session_state['confirm_save'] = False
+
+        # 2. Render Checkbox
         confirm = st.checkbox("I confirm that the details entered above are accurate.", key="confirm_save")
 
-        # Side-by-side layout for the button and the success message
         action_col, msg_col = st.columns([1, 2])
 
         with action_col:
-            # Button is disabled until 'confirm' is checked
-            save_clicked = st.button("💾 Save Record", type="primary", use_container_width=True, disabled=not confirm)
+            # 3. Render Button with the on_click callback attached
+            save_clicked = st.button("💾 Save Record", type="primary", use_container_width=True, disabled=not confirm, on_click=reset_form)
 
-        with msg_col:
-            # Display success message right next to the button, then immediately clear it from memory
-            if 'save_success' in st.session_state:
-                st.success(st.session_state['save_success'])
-                del st.session_state['save_success']
-
-        # --- SAVE PROCESSING ---
+        # 4. Process Save & Display Message
+        # This code runs AFTER the callback, so the form is already visually locked, preventing double-saves!
         if save_clicked:
             if amount <= 0 and trans_type not in ["Loans", "EMI"]:
-                st.error("Please enter a valid amount.")
+                with msg_col:
+                    st.error("Please enter a valid amount.")
             else:
                 new_data = pd.DataFrame([{
                     "Date": entry_date, "Transaction Type": trans_type, "Currency": currency,
@@ -143,11 +141,5 @@ def render_form_tab(csv_file):
                 
                 new_data.to_csv(csv_file, mode='a', header=False, index=False)
                 
-                # Setup success message for the next run
-                st.session_state['save_success'] = f"✅ Successfully added ₹{amount} to {domain}!"
-                
-                # Uncheck the confirmation box automatically
-                st.session_state['confirm_save'] = False
-                
-                # Trigger refresh
-                st.rerun()
+                with msg_col:
+                    st.success(f"✅ Successfully added ₹{amount} to {domain}! Form has been secured.")
