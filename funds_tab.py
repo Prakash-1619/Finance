@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import json
 from datetime import date, timedelta
 
@@ -9,54 +10,43 @@ def get_clean_data(df):
     if df.empty: return df
     extras = df['Extra Details'].apply(lambda x: json.loads(x) if pd.notnull(x) and x != "" else {})
     extras_df = pd.json_normalize(extras)
-    # Ensure indices align perfectly for deletion and joining
     extras_df.index = df.index 
     return pd.concat([df.drop(columns=['Extra Details']), extras_df], axis=1)
 
-# --- HELPER: Advanced Column Filters ---
-def render_dynamic_filters(df, prefix_key):
+# --- HELPER: Advanced Filter Engine (Applies to Charts & Tables) ---
+def apply_dynamic_filters(df, prefix_key):
     if df.empty: return df
-    st.markdown("###### 🔎 Dynamic Filters")
+    st.markdown(f"###### 🔎 Dynamic Filters")
     
-    # Let user pick which columns they want to filter by
-    filter_cols = st.multiselect("Select columns to filter by:", df.columns.tolist(), key=f"sel_cols_{prefix_key}")
-    
+    filter_cols = st.multiselect("Select columns to filter by:", df.columns.tolist(), key=f"sel_{prefix_key}")
     filtered_df = df.copy()
+    
     if filter_cols:
-        cols = st.columns(min(len(filter_cols), 4)) # Max 4 columns wide
+        cols = st.columns(min(len(filter_cols), 4))
         for i, col in enumerate(filter_cols):
             with cols[i % 4]:
                 unique_vals = filtered_df[col].dropna().unique().tolist()
-                selected_vals = st.multiselect(f"Filter {col}", unique_vals, default=unique_vals, key=f"val_{prefix_key}_{col}")
+                selected_vals = st.multiselect(f"{col}", unique_vals, default=unique_vals, key=f"val_{prefix_key}_{col}")
                 filtered_df = filtered_df[filtered_df[col].isin(selected_vals)]
     return filtered_df
 
 # --- HELPER: Safe Delete Interface ---
 def render_delete_interface(df_subset, csv_file, domain_name):
-    st.markdown(f"### 🗑️ Delete {domain_name} Record")
+    st.markdown(f"### 🗑️ Delete Record")
     if df_subset.empty:
         st.info("No records available to delete.")
         return
         
-    st.warning("⚠️ Warning: Deleting a record is permanent and will update your balance sheet instantly.")
+    st.warning("⚠️ Warning: Deleting a record is permanent.")
     
-    # Format options for the dropdown so the user knows exactly what they are deleting
     def format_record(idx):
         row = df_subset.loc[idx]
-        return f"[{row['Date']}] {row['Transaction Type']} - {row['Sub-Category']} - ₹{row['Amount']}"
+        return f"[{row['Date']}] {row['Transaction Type']} - {row.get('Sub-Category', 'N/A')} - ₹{row['Amount']}"
 
-    selected_index = st.selectbox(
-        "Select the exact record to delete:", 
-        options=df_subset.index.tolist(), 
-        format_func=format_record,
-        key=f"del_sel_{domain_name}"
-    )
-
-    # Confirmation Logic
+    selected_index = st.selectbox("Select record to delete:", options=df_subset.index.tolist(), format_func=format_record, key=f"del_sel_{domain_name}")
     confirm = st.checkbox("I confirm that I want to permanently delete this record.", key=f"del_chk_{domain_name}")
     
     if st.button("🚨 Delete Record", type="primary", disabled=not confirm, key=f"del_btn_{domain_name}"):
-        # Load fresh original data to avoid index mismatch
         full_df = pd.read_csv(csv_file)
         full_df = full_df.drop(index=selected_index)
         full_df.to_csv(csv_file, index=False)
@@ -66,10 +56,8 @@ def render_delete_interface(df_subset, csv_file, domain_name):
 # --- MAIN RENDER FUNCTION ---
 def render_funds_tab(csv_file):
     try:
-        # Load data, keeping original indices intact for exact row deletion
         df_raw = pd.read_csv(csv_file)
-        if not df_raw.empty: 
-            df_raw['Date'] = pd.to_datetime(df_raw['Date']).dt.date
+        if not df_raw.empty: df_raw['Date'] = pd.to_datetime(df_raw['Date']).dt.date
     except Exception:
         st.error("⚠️ Data file corrupted or missing.")
         return
@@ -83,135 +71,170 @@ def render_funds_tab(csv_file):
     # ==========================================
     st.markdown("### ⏱️ Global Time Filter")
     time_col1, time_col2 = st.columns([1, 2])
-    
     with time_col1:
-        time_period = st.selectbox("Select Duration", [
-            "All Time", "This Month", "Last Month", "Last 3 Months", 
-            "Last 6 Months", "This Year", "Custom Range"
-        ])
+        time_period = st.selectbox("Select Duration", ["All Time", "This Month", "Last Month", "Last 3 Months", "Last 6 Months", "This Year", "Custom Range"])
     
     today = date.today()
     start_date, end_date = df_raw['Date'].min(), df_raw['Date'].max()
 
-    if time_period == "This Month":
-        start_date = today.replace(day=1)
-    elif time_period == "Last Month":
-        first_of_this_month = today.replace(day=1)
-        end_date = first_of_this_month - timedelta(days=1)
-        start_date = end_date.replace(day=1)
-    elif time_period == "Last 3 Months":
-        start_date = today - timedelta(days=90)
-    elif time_period == "Last 6 Months":
-        start_date = today - timedelta(days=180)
-    elif time_period == "This Year":
-        start_date = today.replace(month=1, day=1)
+    if time_period == "This Month": start_date = today.replace(day=1)
+    elif time_period == "Last Month": start_date, end_date = (today.replace(day=1) - timedelta(days=1)).replace(day=1), today.replace(day=1) - timedelta(days=1)
+    elif time_period == "Last 3 Months": start_date = today - timedelta(days=90)
+    elif time_period == "Last 6 Months": start_date = today - timedelta(days=180)
+    elif time_period == "This Year": start_date = today.replace(month=1, day=1)
     elif time_period == "Custom Range":
         with time_col2:
             dates = st.date_input("Select Date Range", [start_date, end_date])
-            if len(dates) == 2:
-                start_date, end_date = dates
+            if len(dates) == 2: start_date, end_date = dates
 
-    # Apply Time Filter globally
     df = df_raw[(df_raw['Date'] >= start_date) & (df_raw['Date'] <= end_date)].copy()
-    
     st.divider()
 
-    # Dashboard Tabs
-    tabs = st.tabs(["📊 Global Overview", "🚗 Car", "🐑 Sheep", "🌱 Agri Land", "🏠 Home", "🧍 Personal", "💸 Loans & EMI", "🤝 Friends Lending"])
+    # ==========================================
+    # TOP LEVEL TABS
+    # ==========================================
+    tabs = st.tabs([
+        "📊 Global Overview", "🟩 All Received", "🟥 All Paid", "💸 All Loans", 
+        "🚗 Car", "🐑 Sheep", "🌱 Agri", "🏠 Home", "🧍 Personal", "🤝 Friends"
+    ])
 
-    # ==========================================
-    # TAB 0: GLOBAL BALANCE SHEET
-    # ==========================================
+    # --- TAB 0: GLOBAL BALANCE SHEET ---
     with tabs[0]:
-        income = df[(df['Transaction Type'] == 'Received')]['Amount'].sum()
-        expense = df[(df['Transaction Type'] == 'Paid')]['Amount'].sum()
-        balance = income - expense
-
-        col1, col2, col3 = st.columns(3)
-        col1.metric("Total Inflow (All Domains)", f"₹ {income:,.2f}", delta="Income")
-        col2.metric("Total Outflow (All Domains)", f"₹ {expense:,.2f}", delta="Expense", delta_color="inverse")
-        col3.metric("Overall Net Balance", f"₹ {balance:,.2f}", delta="Profit/Loss")
-
-        st.markdown("**Master Filterable Data Table**")
         clean_master = get_clean_data(df)
-        filtered_master = render_dynamic_filters(clean_master, "global")
-        st.dataframe(filtered_master.sort_values('Date', ascending=False), use_container_width=True)
+        filtered_global = apply_dynamic_filters(clean_master, "global")
+        
+        # KPIs based on Filtered Data
+        income = filtered_global[filtered_global['Transaction Type'] == 'Received']['Amount'].sum()
+        expense = filtered_global[filtered_global['Transaction Type'] == 'Paid']['Amount'].sum()
+        
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Total Inflow", f"₹ {income:,.2f}", delta="Income")
+        c2.metric("Total Outflow", f"₹ {expense:,.2f}", delta="Expense", delta_color="inverse")
+        c3.metric("Net Balance", f"₹ {(income - expense):,.2f}", delta="Profit/Loss")
+
+        st.divider()
+        
+        # Row 1: Pie Charts
+        p_col1, p_col2 = st.columns(2)
+        with p_col1:
+            st.markdown("**Income by Domain**")
+            inc_df = filtered_global[filtered_global['Transaction Type'] == 'Received']
+            if not inc_df.empty:
+                st.plotly_chart(px.pie(inc_df, values='Amount', names='Domain', hole=0.4, template="plotly_white"), use_container_width=True)
+            else: st.info("No income data.")
+            
+        with p_col2:
+            st.markdown("**Expense by Domain**")
+            exp_df = filtered_global[filtered_global['Transaction Type'] == 'Paid']
+            if not exp_df.empty:
+                st.plotly_chart(px.pie(exp_df, values='Amount', names='Domain', hole=0.4, template="plotly_white"), use_container_width=True)
+            else: st.info("No expense data.")
+
+        # Row 2: Trend Lines
+        t_col1, t_col2 = st.columns(2)
+        with t_col1:
+            st.markdown("**Daily Cashflow Timeline**")
+            time_df = filtered_global.groupby(['Date', 'Transaction Type'])['Amount'].sum().reset_index()
+            if not time_df.empty:
+                st.plotly_chart(px.bar(time_df, x='Date', y='Amount', color='Transaction Type', barmode='group', template="plotly_white"), use_container_width=True)
+                
+        with t_col2:
+            st.markdown("**Cumulative Net Balance**")
+            if not filtered_global.empty:
+                bal_df = filtered_global.groupby(['Date', 'Transaction Type'])['Amount'].sum().unstack(fill_value=0).reset_index()
+                if 'Received' not in bal_df: bal_df['Received'] = 0
+                if 'Paid' not in bal_df: bal_df['Paid'] = 0
+                bal_df['Daily Net'] = bal_df['Received'] - bal_df['Paid']
+                bal_df['Cumulative'] = bal_df['Daily Net'].cumsum()
+                st.plotly_chart(px.area(bal_df, x='Date', y='Cumulative', template="plotly_white"), use_container_width=True)
+
+        st.markdown("**Filtered Master Data Table**")
+        st.dataframe(filtered_global.sort_values('Date', ascending=False), use_container_width=True)
+
+    # --- TAB 1: ALL RECEIVED ---
+    with tabs[1]:
+        rec_only = get_clean_data(df[df['Transaction Type'] == 'Received'])
+        filt_rec = apply_dynamic_filters(rec_only, "all_rec")
+        st.metric("Total Filtered Income", f"₹ {filt_rec['Amount'].sum():,.2f}")
+        if not filt_rec.empty:
+            st.plotly_chart(px.bar(filt_rec.groupby('Domain')['Amount'].sum().reset_index(), x='Domain', y='Amount', color='Domain', template="plotly_white"), use_container_width=True)
+            st.dataframe(filt_rec.sort_values('Date', ascending=False), use_container_width=True)
+
+    # --- TAB 2: ALL PAID ---
+    with tabs[2]:
+        paid_only = get_clean_data(df[df['Transaction Type'] == 'Paid'])
+        filt_paid = apply_dynamic_filters(paid_only, "all_paid")
+        st.metric("Total Filtered Expense", f"₹ {filt_paid['Amount'].sum():,.2f}")
+        if not filt_paid.empty:
+            st.plotly_chart(px.bar(filt_paid.groupby('Domain')['Amount'].sum().reset_index(), x='Domain', y='Amount', color='Domain', template="plotly_white"), use_container_width=True)
+            st.dataframe(filt_paid.sort_values('Date', ascending=False), use_container_width=True)
+
+    # --- TAB 3: ALL LOANS & EMI ---
+    with tabs[3]:
+        loan_df = df[df['Domain'].isin(["Loans", "EMI"])].copy()
+        if not loan_df.empty:
+            filt_loan = apply_dynamic_filters(get_clean_data(loan_df), "all_loans")
+            st.metric("Total Filtered Liabilities", f"₹ {filt_loan['Amount'].sum():,.2f}")
+            st.dataframe(filt_loan.sort_values('Date', ascending=False), use_container_width=True)
+            render_delete_interface(loan_df, csv_file, "Loans/EMI")
+        else: st.info("No Loans/EMI data.")
 
     # ==========================================
-    # DOMAIN SPECIFIC DASHBOARDS GENERATOR
+    # DOMAIN SPECIFIC DASHBOARDS (Tabs 4-9)
     # ==========================================
     def render_domain_dashboard(domain_name, tab_obj):
         with tab_obj:
             domain_df = df[df['Domain'] == domain_name].copy()
             if domain_df.empty:
-                st.info(f"No data recorded for {domain_name} in this timeframe.")
+                st.info(f"No records for {domain_name}.")
                 return
 
-            clean_df = get_clean_data(domain_df)
+            # Apply domain-wide filter first so everything below updates
+            clean_dom = get_clean_data(domain_df)
+            filt_dom = apply_dynamic_filters(clean_dom, f"dom_{domain_name}")
             
-            # SUB-TABS within the Domain
             sub_tabs = st.tabs(["📊 Section Balance", "🟥 Paid (Expense)", "🟩 Received (Income)", "⚙️ Manage & Delete"])
             
-            # Sub-Tab 1: Balance Sheet
+            # SUB-TAB: BALANCE
             with sub_tabs[0]:
-                d_in = clean_df[clean_df['Transaction Type'] == 'Received']['Amount'].sum()
-                d_out = clean_df[clean_df['Transaction Type'] == 'Paid']['Amount'].sum()
-                
+                d_in = filt_dom[filt_dom['Transaction Type'] == 'Received']['Amount'].sum()
+                d_out = filt_dom[filt_dom['Transaction Type'] == 'Paid']['Amount'].sum()
                 m1, m2, m3 = st.columns(3)
-                m1.metric(f"{domain_name} Inflow", f"₹ {d_in:,.2f}")
-                m2.metric(f"{domain_name} Outflow", f"₹ {d_out:,.2f}")
-                m3.metric(f"{domain_name} Net", f"₹ {(d_in - d_out):,.2f}")
+                m1.metric("Inflow", f"₹ {d_in:,.2f}")
+                m2.metric("Outflow", f"₹ {d_out:,.2f}")
+                m3.metric("Net", f"₹ {(d_in - d_out):,.2f}")
                 
-                if 'Sub-Category' in clean_df.columns:
-                    st.markdown(f"**{domain_name} Summary by Category**")
-                    summary = clean_df.groupby(['Sub-Category', 'Transaction Type'])['Amount'].sum().reset_index()
-                    fig = px.bar(summary, x='Sub-Category', y='Amount', color='Transaction Type', barmode='group')
-                    st.plotly_chart(fig, use_container_width=True)
+                if 'Sub-Category' in filt_dom.columns and not filt_dom.empty:
+                    summary = filt_dom.groupby(['Sub-Category', 'Transaction Type'])['Amount'].sum().reset_index()
+                    st.plotly_chart(px.bar(summary, x='Sub-Category', y='Amount', color='Transaction Type', barmode='group', template="plotly_white"), use_container_width=True)
 
-            # Sub-Tab 2: Paid (Expenses)
+            # SUB-TAB: PAID
             with sub_tabs[1]:
-                paid_df = clean_df[clean_df['Transaction Type'] == 'Paid']
-                if not paid_df.empty:
-                    f_paid = render_dynamic_filters(paid_df, f"{domain_name}_paid")
-                    st.dataframe(f_paid.sort_values('Date', ascending=False), use_container_width=True)
-                else:
-                    st.write("No paid transactions.")
+                s_paid = filt_dom[filt_dom['Transaction Type'] == 'Paid']
+                if not s_paid.empty:
+                    if 'Sub-Category' in s_paid.columns:
+                        st.plotly_chart(px.pie(s_paid, values='Amount', names='Sub-Category', hole=0.5, template="plotly_white", height=300), use_container_width=True)
+                    st.dataframe(s_paid.sort_values('Date', ascending=False), use_container_width=True)
+                else: st.write("No paid records.")
 
-            # Sub-Tab 3: Received (Income)
+            # SUB-TAB: RECEIVED
             with sub_tabs[2]:
-                rec_df = clean_df[clean_df['Transaction Type'] == 'Received']
-                if not rec_df.empty:
-                    f_rec = render_dynamic_filters(rec_df, f"{domain_name}_rec")
-                    st.dataframe(f_rec.sort_values('Date', ascending=False), use_container_width=True)
-                else:
-                    st.write("No received transactions.")
+                s_rec = filt_dom[filt_dom['Transaction Type'] == 'Received']
+                if not s_rec.empty:
+                    if 'Sub-Category' in s_rec.columns:
+                        st.plotly_chart(px.pie(s_rec, values='Amount', names='Sub-Category', hole=0.5, template="plotly_white", height=300), use_container_width=True)
+                    st.dataframe(s_rec.sort_values('Date', ascending=False), use_container_width=True)
+                else: st.write("No received records.")
 
-            # Sub-Tab 4: Manage & Delete
+            # SUB-TAB: DELETE
             with sub_tabs[3]:
+                # We pass the raw domain_df here (unfiltered) so indexes align perfectly for deletion
                 render_delete_interface(domain_df, csv_file, domain_name)
 
-    # Render Domains
-    render_domain_dashboard("Car", tabs[1])
-    render_domain_dashboard("Sheep", tabs[2])
-    render_domain_dashboard("Agri Land", tabs[3])
-    render_domain_dashboard("Home", tabs[4])
-    render_domain_dashboard("Personal", tabs[5])
-    
-    # Combined Loans/EMI Custom Handling
-    with tabs[6]:
-        loan_df = df[df['Domain'].isin(["Loans", "EMI"])].copy()
-        if not loan_df.empty:
-            clean_loan = get_clean_data(loan_df)
-            l_tabs = st.tabs(["📊 Overview", "⚙️ Manage & Delete"])
-            
-            with l_tabs[0]:
-                st.metric("Total Liabilities Tracked", f"₹ {clean_loan['Amount'].sum():,.2f}")
-                filtered_loan = render_dynamic_filters(clean_loan, "loans")
-                st.dataframe(filtered_loan.sort_values('Date', ascending=False), use_container_width=True)
-                
-            with l_tabs[1]:
-                render_delete_interface(loan_df, csv_file, "Loans & EMI")
-        else:
-            st.info("No Loan or EMI records found.")
-
-    render_domain_dashboard("Friends lending", tabs[7])
+    # Render Domain Tabs
+    render_domain_dashboard("Car", tabs[4])
+    render_domain_dashboard("Sheep", tabs[5])
+    render_domain_dashboard("Agri Land", tabs[6])
+    render_domain_dashboard("Home", tabs[7])
+    render_domain_dashboard("Personal", tabs[8])
+    render_domain_dashboard("Friends lending", tabs[9])
