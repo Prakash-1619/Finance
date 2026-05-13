@@ -23,7 +23,7 @@ def render_form_tab(csv_file):
         with col2:
             currency = st.selectbox("Currency", ["INR (₹)", "USD ($)", "EUR (€)", "Other"])
             payment_status = st.selectbox("Payment Status", ["Completed / Received", "Pending / Expected"])
-            frequency = st.selectbox("Frequency", ["One-time", "Daily", "Weekly", "Monthly", "Annually"]) if trans_type in ["Paid", "Received"] else "One-time"
+            frequency = st.selectbox("Frequency", ["One-time", "Daily", "Weekly", "Monthly", "Annually", "None"]) if trans_type in ["Paid", "Received"] else "One-time"
             
         with col3:
             st.markdown("**Payment Route**")
