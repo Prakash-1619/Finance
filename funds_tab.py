@@ -3,10 +3,8 @@ import pandas as pd
 import plotly.express as px
 import json
 
-# --- Helper: Flatten JSON for plotting ---
 def get_clean_data(df):
-    if df.empty:
-        return df
+    if df.empty: return df
     extras = df['Extra Details'].apply(lambda x: json.loads(x) if pd.notnull(x) and x != "" else {})
     extras_df = pd.json_normalize(extras)
     extras_df.index = df.index
@@ -15,104 +13,109 @@ def get_clean_data(df):
 def render_funds_tab(csv_file):
     try:
         df = pd.read_csv(csv_file)
-        if not df.empty:
-            df['Date'] = pd.to_datetime(df['Date']).dt.date
+        if not df.empty: df['Date'] = pd.to_datetime(df['Date']).dt.date
     except Exception:
-        st.error("⚠️ Data file not found. Please add an entry first.")
+        st.error("⚠️ Data file corrupted or missing.")
         return
 
     if df.empty:
-        st.info("No records found yet.")
+        st.info("No financial records found. Head to the Data Entry form.")
         return
 
-    # --- TOP LEVEL DASHBOARD METRICS ---
-    st.title("📉 Performance Dashboard")
-    
-    income = df[df['Transaction Type'] == 'Received']['Amount'].sum()
-    expense = df[df['Transaction Type'] == 'Paid']['Amount'].sum()
-    balance = income - expense
+    # Dashboard Tabs
+    tabs = st.tabs(["📊 Global Overview", "🚗 Car", "🐑 Sheep", "🌱 Agri Land", "🏠 Home", "🧍 Personal", "💸 Loans & EMI", "🤝 Friends Lending"])
 
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("Total Inflow", f"₹{income:,.2f}", delta_color="normal")
-    with col2:
-        st.metric("Total Outflow", f"₹{expense:,.2f}", delta="-", delta_color="inverse")
-    with col3:
-        st.metric("Net Balance", f"₹{balance:,.2f}", delta=f"{balance:,.2f}")
-
-    st.divider()
-
-    # --- TABS FOR DETAILED ANALYSIS ---
-    tab_list = ["📊 Overall Analysis", "🚗 Car", "🐑 Sheep", "🌱 Agri Land", "🏠 Home", "🧍 Personal", "💸 Loans & EMI", "🤝 Friends"]
-    tabs = st.tabs(tab_list)
-
-    # --- TAB 1: OVERALL ANALYSIS ---
+    # --- TAB 0: GLOBAL BALANCE SHEET ---
     with tabs[0]:
-        st.subheader("Global Financial Trends")
-        
-        chart_col1, chart_col2 = st.columns(2)
-        
-        with chart_col1:
-            st.write("**Expense Distribution by Domain**")
+        income = df[(df['Transaction Type'] == 'Received') & (df['Payment Status'].str.contains("Completed"))]['Amount'].sum()
+        expense = df[(df['Transaction Type'] == 'Paid') & (df['Payment Status'].str.contains("Completed"))]['Amount'].sum()
+        pending = df[df['Payment Status'].str.contains("Pending")]['Amount'].sum()
+
+        col1, col2, col3, col4 = st.columns(4)
+        col1.metric("Total Realized Inflow", f"{income:,.2f}", delta="Income")
+        col2.metric("Total Realized Outflow", f"{expense:,.2f}", delta="Expense", delta_color="inverse")
+        col3.metric("Net Cash Flow", f"{(income - expense):,.2f}", delta="Balance")
+        col4.metric("Total Pending/Expected", f"{pending:,.2f}", delta="Awaiting", delta_color="off")
+
+        st.divider()
+
+        c_chart1, c_chart2 = st.columns(2)
+        with c_chart1:
+            st.markdown("**Outflow Breakdown by Domain**")
             exp_df = df[df['Transaction Type'] == 'Paid']
-            fig_pie = px.pie(exp_df, values='Amount', names='Domain', hole=0.5, color_discrete_sequence=px.colors.sequential.RdBu)
-            st.plotly_chart(fig_pie, use_container_width=True)
-            
-        with chart_col2:
-            st.write("**Income vs Expense Over Time**")
-            timeline = df.groupby(['Date', 'Transaction Type'])['Amount'].sum().reset_index()
-            fig_line = px.line(timeline, x="Date", y="Amount", color="Transaction Type", markers=True)
-            st.plotly_chart(fig_line, use_container_width=True)
+            if not exp_df.empty:
+                fig1 = px.pie(exp_df, values='Amount', names='Domain', hole=0.4, template="plotly_white")
+                st.plotly_chart(fig1, use_container_width=True)
+                
+        with c_chart2:
+            st.markdown("**Cashflow Timeline**")
+            time_df = df.groupby(['Date', 'Transaction Type'])['Amount'].sum().reset_index()
+            if not time_df.empty:
+                fig2 = px.bar(time_df, x='Date', y='Amount', color='Transaction Type', barmode='group', template="plotly_white")
+                st.plotly_chart(fig2, use_container_width=True)
 
-        st.write("**All Transactions**")
-        st.dataframe(df.sort_values('Date', ascending=False), use_container_width=True, hide_index=True)
+        st.markdown("**Master Record Table**")
+        st.dataframe(get_clean_data(df).sort_values('Date', ascending=False), use_container_width=True, hide_index=True)
 
-    # --- GENERIC FUNCTION FOR SECTION DASHBOARDS ---
-    def render_section_dashboard(domain_name, tab_obj):
+    # --- DOMAIN SPECIFIC TABS GENERATOR ---
+    def render_domain_dashboard(domain_name, tab_obj):
         with tab_obj:
-            section_df = df[df['Domain'] == domain_name].copy()
-            if section_df.empty:
-                st.info(f"No records for {domain_name}")
+            domain_df = df[df['Domain'] == domain_name].copy()
+            if domain_df.empty:
+                st.info(f"No data recorded for {domain_name} yet.")
                 return
-            
-            clean_df = get_clean_data(section_df)
-            
-            # Section Metrics
-            s_total = clean_df['Amount'].sum()
-            count = len(clean_df)
-            
-            m1, m2 = st.columns(2)
-            m1.metric(f"Total {domain_name} Volume", f"₹{s_total:,.2f}")
-            m2.metric("Total Entries", count)
 
-            # Section Specific Plot
-            st.write(f"**{domain_name} Spend Breakdown**")
-            fig_sec = px.bar(clean_df, x='Sub-Category', y='Amount', color='Sub-Category', text_auto='.2s')
-            st.plotly_chart(fig_sec, use_container_width=True)
+            clean_df = get_clean_data(domain_df)
+            
+            # Domain specific layout
+            d_col1, d_col2 = st.columns([1, 2])
+            
+            with d_col1:
+                total_vol = clean_df['Amount'].sum()
+                st.metric(f"{domain_name} Total Volume", f"{total_vol:,.2f}")
+                st.caption(f"Based on {len(clean_df)} total records.")
 
-            # Expander for Filters
-            with st.expander("🔍 Advanced Filters"):
-                # (Optional filters logic here)
-                pass
+            with d_col2:
+                # Dynamic Bar Chart based on Sub-Categories
+                if 'Sub-Category' in clean_df.columns and not clean_df['Sub-Category'].isna().all():
+                    fig = px.bar(clean_df, x='Sub-Category', y='Amount', color='Sub-Category', template="plotly_white", height=250)
+                    fig.update_layout(showlegend=False, margin=dict(l=0, r=0, t=10, b=0))
+                    st.plotly_chart(fig, use_container_width=True)
 
-            st.write("**Data Records**")
+            # Dynamic Filter Expander
+            with st.expander(f"🔍 Dynamic Filters for {domain_name}"):
+                f_col1, f_col2 = st.columns(2)
+                
+                # Filter by Sub-Category if it exists
+                if 'Sub-Category' in clean_df.columns:
+                    subs = clean_df['Sub-Category'].dropna().unique().tolist()
+                    selected_subs = f_col1.multiselect("Filter Sub-Category", subs, default=subs, key=f"sub_{domain_name}")
+                    clean_df = clean_df[clean_df['Sub-Category'].isin(selected_subs)]
+                
+                # Filter by Bank Name
+                if 'Bank Name' in clean_df.columns:
+                    banks = clean_df['Bank Name'].dropna().unique().tolist()
+                    selected_banks = f_col2.multiselect("Filter Bank Source", banks, default=banks, key=f"bank_{domain_name}")
+                    clean_df = clean_df[clean_df['Bank Name'].isin(selected_banks)]
+
+            # Fully Flattened Data Table showing by default
             st.dataframe(clean_df.sort_values('Date', ascending=False), use_container_width=True, hide_index=True)
 
-    # --- RENDER OTHER TABS ---
-    render_section_dashboard("Car", tabs[1])
-    render_section_dashboard("Sheep", tabs[2])
-    render_section_dashboard("Agri Land", tabs[3])
-    render_section_dashboard("Home", tabs[4])
-    render_section_dashboard("Personal", tabs[5])
-
-    # Loans & EMI (Special handling for combined metrics)
+    # Render Domains mapping to their respective tabs
+    render_domain_dashboard("Car", tabs[1])
+    render_domain_dashboard("Sheep", tabs[2])
+    render_domain_dashboard("Agri Land", tabs[3])
+    render_domain_dashboard("Home", tabs[4])
+    render_domain_dashboard("Personal", tabs[5])
+    
+    # Combined Loans/EMI
     with tabs[6]:
         loan_df = df[df['Domain'].isin(["Loans", "EMI"])]
         if not loan_df.empty:
             clean_loan = get_clean_data(loan_df)
-            st.metric("Total Debt/Liability", f"₹{clean_loan['Amount'].sum():,.2f}")
-            fig_loan = px.area(clean_loan, x="Date", y="Amount", color="Domain")
-            st.plotly_chart(fig_loan, use_container_width=True)
-            st.dataframe(clean_loan, use_container_width=True)
+            st.metric("Total Outstanding / Assessed Principal", f"{clean_loan['Amount'].sum():,.2f}")
+            st.dataframe(clean_loan.sort_values('Date', ascending=False), use_container_width=True, hide_index=True)
+        else:
+            st.info("No Loan or EMI records found.")
 
-    render_section_dashboard("Friends lending", tabs[7])
+    render_domain_dashboard("Friends lending", tabs[7])
