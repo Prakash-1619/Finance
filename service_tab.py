@@ -1,5 +1,13 @@
 import streamlit as st
 
 def render_service_tab():
-    st.header("🛠️ Service Management")
-    st.info("This section is under construction. You can add specific tracking for maintenance, schedules, and service logs here later.")
+    st.header("🛠️ Service & Maintenance Hub")
+    st.info("This dedicated space is reserved for tracking equipment maintenance, vehicle service histories, and scheduled tasks. To be integrated later.")
+    
+    # Example of what could go here later
+    st.markdown("""
+    **Future Features:**
+    * 📅 Service Calendar
+    * ⚙️ Spare Parts Inventory
+    * ⚠️ Upcoming Maintenance Alerts
+    """)
