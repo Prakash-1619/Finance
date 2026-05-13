@@ -25,6 +25,5 @@ main_tabs = st.tabs(["📝 Data Entry Form", "📈 Funds Dashboard", "🛠️ Se
 
 # We no longer pass CSV_FILE path, everything routes through github_sync now
 with main_tabs[0]: render_form_tab()
-with main_tabs[1]: render_funds_tab()  #(df)  # Pass the dataframe or variable it's asking for
-
+with main_tabs[1]: render_funds_tab(df) 
 with main_tabs[2]: render_service_tab()
