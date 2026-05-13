@@ -32,7 +32,7 @@ def render_form_tab(csv_file):
             phone_num = st.selectbox("Number Used", ["9550927050", "7702486243", "Other"])
 
         st.markdown("**Entities & Description**")
-        p_col1, p_col2 = st.columns(2)
+        p_col1, p_col2, p_col3 = st.columns(3)
         with p_col1:
             person_org = st.text_input("Person Name")
         with p_col2:
