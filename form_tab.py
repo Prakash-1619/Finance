@@ -4,123 +4,118 @@ from datetime import date
 import json
 
 def render_form_tab(csv_file):
-    st.header("Add New Entry")
+    # Form Sub-Tabs
+    form_tabs = st.tabs(["💵 Financial Entry", "🔧 Service Entry (Placeholder)"])
     
-    # --- CORE TRANSACTION DETAILS ---
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        entry_date = st.date_input("Date", date.today())
-        trans_type = st.radio("Transaction Type", ["Paid", "Received", "Loans", "EMI"])
-        amount = st.number_input("Amount", min_value=0.0, step=100.0, format="%.2f")
+    with form_tabs[1]:
+        st.info("Service form fields will go here in the future.")
         
-        # Payment App & Bank Details
-        st.markdown("**Payment Route**")
-        pay_app = st.selectbox("Service Name / App", ["Phone pe", "Paytm", "G pay", "super money", "None"])
-        phone_num = st.selectbox("Number Used", ["9550927050", "7702486243", "Other"])
-        bank_name = st.selectbox("Bank Name", ["Indian", "SBI", "FI/Federal", "AXIS", "Cash"])
-
-    with col2:
-        st.markdown("**Entities & Frequencies**")
-        person_name = st.text_input("Name of the Person")
-        org_name = st.text_input("Name of Organization")
-        desc = st.text_area("Brief Description / Purpose")
+    with form_tabs[0]:
+        st.subheader("Add New Transaction")
         
-        frequency = "One-time"
-        if trans_type == "Paid":
-            frequency = st.selectbox("Frequency", ["One-time", "Daily", "Weekly", "Monthly", "Quarterly", "Annually"])
+        # --- 1. CORE TRANSACTION DETAILS ---
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            entry_date = st.date_input("Transaction Date", date.today())
+            trans_type = st.radio("Type", ["Paid", "Received", "Loans", "EMI"], horizontal=True)
+            amount = st.number_input("Amount", min_value=0.0, step=100.0, format="%.2f")
             
-    st.divider()
+        with col2:
+            currency = st.selectbox("Currency", ["INR (₹)", "USD ($)", "EUR (€)", "Other"])
+            payment_status = st.selectbox("Payment Status", ["Completed / Received", "Pending / Expected"])
+            frequency = st.selectbox("Frequency", ["One-time", "Daily", "Weekly", "Monthly", "Annually"]) if trans_type in ["Paid", "Received"] else "One-time"
+            
+        with col3:
+            st.markdown("**Payment Route**")
+            pay_app = st.selectbox("App/Method", ["PhonePe", "Paytm", "GPay", "Super Money", "None"])
+            bank_name = st.selectbox("Bank", ["Indian Bank", "SBI", "FI/Federal", "AXIS", "Cash"])
+            phone_num = st.selectbox("Number Used", ["9550927050", "7702486243", "Other"])
 
-    # --- DOMAIN SPECIFIC LOGIC ---
-    st.subheader("Domain Specifics")
-    
-    # Determine the list of domains based on Transaction Type
-    if trans_type == "Received":
-        domain_list = ["Salary", "Car", "Sheep", "Personal", "Home", "Agri Land", "Loans", "Friends lending"]
-    elif trans_type == "Loans":
-        domain_list = ["Loans"]
-    elif trans_type == "EMI":
-        domain_list = ["EMI"]
-    else:
-        domain_list = ["Car", "Sheep", "Personal", "Home", "Agri Land", "Loans", "Friends lending", "EMI"]
+        st.markdown("**Entities & Description**")
+        p_col1, p_col2 = st.columns(2)
+        with p_col1:
+            person_org = st.text_input("Person or Organization Name")
+        with p_col2:
+            desc = st.text_input("Brief Description / Purpose")
+            
+        st.divider()
 
-    domain = st.selectbox("Select Domain / Source", domain_list)
-    
-    # Initialize variables to capture specific details
-    sub_category = ""
-    extra_details = {}
-
-    # Logic trees matching your form sections
-    if domain == "Car" and trans_type != "Received":
-        sub_category = st.selectbox("Car Category", ["Repair", "Service", "Washing", "Diesel", "Other"])
-        extra_details["Car Name"] = st.text_input("Car Name")
-        if sub_category == "Diesel":
-            extra_details["KM"] = st.text_input("Mention KM")
-        extra_details["Price"] = st.text_input("Mention Price")
-        extra_details["Details"] = st.text_area("Car Details")
-
-    elif domain == "Sheep" and trans_type != "Received":
-        extra_details["Action Date"] = str(st.date_input("Sheep Date", date.today()))
-        sub_category = st.selectbox("Sheep Category", ["Purchase", "Medical", "Labour", "Other"])
-        if sub_category == "Medical":
-            extra_details["Doctor"] = st.text_input("Doctor Name")
-        extra_details["Details"] = st.text_area("Sheep Details")
-
-    elif domain == "Personal" and trans_type != "Received":
-        sub_category = st.selectbox("Personal Category", ["Food", "Fashion", "Option 3"])
-
-    elif domain == "Home" and trans_type != "Received":
-        sub_category = st.selectbox("Home Category", ["Occasion", "Event", "Parents", "House hold", "Other"])
-
-    elif domain == "Agri Land" and trans_type != "Received":
-        sub_category = st.selectbox("Agri Category", ["Fodder", "Ploughing", "Plants", "Labour", "Pipe and irrigation", "Pesticide", "Fertilizers", "Other"])
-
-    elif domain == "Friends lending" and trans_type != "Received":
-        extra_details["Purpose"] = st.text_input("Purpose")
-        sub_category = st.selectbox("Trans Details", ["Returning", "Help", "Other"])
-        if sub_category == "Returning":
-            extra_details["Returning Date"] = str(st.date_input("When Returning?", date.today()))
-
-    elif domain == "Loans":
-        extra_details["Loan Date"] = str(st.date_input("Loan Date", date.today()))
-        sub_category = st.selectbox("Asset", ["Gold", "Car", "Land", "Personal", "Business"])
-        extra_details["Interest"] = st.text_input("Interest Rate/Amount")
-        extra_details["Tenure (Months)"] = st.text_input("Tenure (In months)")
-        extra_details["Loan Details"] = st.text_area("Loan specifics")
-
-    elif domain == "EMI":
-        sub_category = st.selectbox("Loan Type", ["Personal", "Other"])
-        extra_details["Interest"] = st.text_input("Interest")
-        extra_details["Loan Name"] = st.text_input("Loan Name")
-        extra_details["EMI per month"] = st.text_input("EMI per month")
-        extra_details["EMI Date"] = st.text_input("EMI Date (e.g., 5th of every month)")
-        extra_details["Tenure"] = st.text_input("Tenure")
-
-    # --- SUBMIT LOGIC ---
-    if st.button("💾 Save Entry", type="primary", use_container_width=True):
-        if amount <= 0 and trans_type not in ["Loans", "EMI"]:
-            # Allow zero amount for Loans/EMI if you are just logging the contract, otherwise enforce > 0
-            st.error("Please enter a valid amount.")
+        # --- 2. DOMAIN SPECIFIC LOGIC ---
+        st.subheader("Domain Specifics")
+        
+        if trans_type == "Received":
+            domain_list = ["Salary", "Car", "Sheep", "Personal", "Home", "Agri Land", "Loans", "Friends lending"]
+        elif trans_type in ["Loans", "EMI"]:
+            domain_list = [trans_type]
         else:
-            # Combine person and org name for the CSV
-            person_org = f"{person_name} ({org_name})" if org_name else person_name
-            
-            new_data = pd.DataFrame([{
-                "Date": entry_date,
-                "Transaction Type": trans_type,
-                "Amount": amount,
-                "Frequency": frequency,
-                "Payment App": pay_app,
-                "Phone Number": phone_num,
-                "Bank Name": bank_name,
-                "Person/Org Name": person_org,
-                "Domain": domain,
-                "Sub-Category": sub_category,
-                "Description": desc,
-                "Extra Details": json.dumps(extra_details) # Saves dictionary as a readable string
-            }])
-            
-            new_data.to_csv(csv_file, mode='a', header=False, index=False)
-            st.success("✅ Transaction Saved Successfully!")
-            st.rerun()
+            domain_list = ["Car", "Sheep", "Personal", "Home", "Agri Land", "Friends lending"]
+
+        domain = st.selectbox("Select Domain / Category", domain_list)
+        
+        sub_category = ""
+        extra = {}
+
+        # DYNAMIC LOGIC GATES
+        if domain == "Car" and trans_type != "Received":
+            sub_category = st.selectbox("Car Category", ["Diesel", "Repair", "Service", "Washing", "Insurance", "Other"])
+            extra["Car Name"] = st.text_input("Car Name")
+            if sub_category == "Diesel":
+                extra["Current Odometer (KM)"] = st.number_input("Odometer Reading", min_value=0)
+            if sub_category == "Insurance":
+                extra["Policy Renewal Date"] = str(st.date_input("Renewal Date", date.today()))
+
+        elif domain == "Sheep" and trans_type != "Received":
+            sub_category = st.selectbox("Sheep Category", ["Purchase", "Medical", "Labour", "Feed", "Other"])
+            extra["Tag ID / Count"] = st.text_input("Animal Tag ID(s) or Total Count")
+            extra["Total Weight (kg)"] = st.number_input("Weight (kg)", min_value=0.0)
+            if sub_category == "Medical":
+                extra["Doctor Name"] = st.text_input("Veterinarian Name")
+
+        elif domain == "Agri Land" and trans_type != "Received":
+            sub_category = st.selectbox("Agri Category", ["Fertilizers", "Pesticide", "Ploughing", "Labour", "Seeds/Plants", "Irrigation", "Fodder"])
+            extra["Crop/Season"] = st.text_input("Crop Cycle or Season (e.g., Kharif Corn)")
+            if sub_category in ["Fertilizers", "Pesticide", "Seeds/Plants", "Fodder"]:
+                extra["Quantity & Unit"] = st.text_input("Quantity (e.g., 5 Bags, 10 Liters)")
+
+        elif domain == "Personal" and trans_type != "Received":
+            sub_category = st.selectbox("Personal Category", ["Food", "Fashion", "Health/Medical", "Subscriptions", "Education", "Gifts/Donations"])
+
+        elif domain == "Home" and trans_type != "Received":
+            sub_category = st.selectbox("Home Category", ["Household", "Parents", "Occasion/Event", "Appliance/Asset", "Repair"])
+            if sub_category in ["Appliance/Asset", "Repair"]:
+                extra["Asset Name"] = st.text_input("Specific Asset (e.g., Washing Machine, Roof)")
+
+        elif domain == "Friends lending" and trans_type != "Received":
+            sub_category = st.selectbox("Lending Detail", ["Lending Out", "Helping", "Other"])
+            extra["Agreed Return Amount"] = st.number_input("Expected Return Amount", min_value=0.0)
+            extra["Expected Return Date"] = str(st.date_input("When Returning?", date.today()))
+            extra["Send Reminder?"] = st.selectbox("Needs Reminder?", ["Yes", "No"])
+
+        elif domain == "Loans":
+            sub_category = st.selectbox("Asset Loan Against", ["Gold", "Car", "Land", "Personal", "Business"])
+            extra["Interest Type"] = st.selectbox("Interest Type", ["Flat Rate", "Reducing Balance"])
+            extra["Interest Rate/Amt"] = st.text_input("Interest Rate")
+            extra["Tenure (Months)"] = st.number_input("Tenure (Months)", min_value=1)
+            extra["Projected End Date"] = str(st.date_input("End Date", date.today()))
+
+        elif domain == "EMI":
+            sub_category = st.selectbox("Loan Type", ["Personal", "Vehicle", "Home", "Other"])
+            extra["Loan Name"] = st.text_input("Loan Name")
+            extra["Next Due Date"] = str(st.date_input("Next EMI Due Date", date.today()))
+            extra["Tenure Remaining"] = st.text_input("Months Remaining")
+
+        # --- SUBMIT ---
+        if st.button("💾 Save Record", type="primary", use_container_width=True):
+            if amount <= 0 and trans_type not in ["Loans", "EMI"]:
+                st.error("Please enter a valid amount.")
+            else:
+                new_data = pd.DataFrame([{
+                    "Date": entry_date, "Transaction Type": trans_type, "Currency": currency,
+                    "Payment Status": payment_status, "Amount": amount, "Frequency": frequency,
+                    "Payment App": pay_app, "Phone Number": phone_num, "Bank Name": bank_name,
+                    "Person/Org Name": person_org, "Domain": domain, "Sub-Category": sub_category,
+                    "Description": desc, "Extra Details": json.dumps(extra)
+                }])
+                new_data.to_csv(csv_file, mode='a', header=False, index=False)
+                st.success(f"✅ Record Saved to {domain} successfully!")
+                st.rerun()
