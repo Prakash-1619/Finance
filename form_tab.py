@@ -2,9 +2,9 @@ import streamlit as st
 import pandas as pd
 from datetime import date
 import json
+from github_sync import load_data, save_data_to_github
 
-def render_form_tab(csv_file):
-    # Form Sub-Tabs
+def render_form_tab():
     form_tabs = st.tabs(["💵 Financial Entry", "🔧 Service Entry (Placeholder)"])
     
     with form_tabs[1]:
@@ -13,7 +13,6 @@ def render_form_tab(csv_file):
     with form_tabs[0]:
         st.subheader("Add New Transaction")
         
-        # --- 1. CORE TRANSACTION DETAILS ---
         col1, col2, col3 = st.columns(3)
         with col1:
             entry_date = st.date_input("Transaction Date", date.today())
@@ -42,64 +41,48 @@ def render_form_tab(csv_file):
             
         st.divider()
 
-        # --- 2. DOMAIN SPECIFIC LOGIC ---
+        # --- DOMAIN SPECIFIC LOGIC ---
         st.subheader("Domain Specifics")
         
-        if trans_type == "Received":
-            domain_list = ["Salary", "Car", "Sheep", "Personal", "Home", "Agri Land", "Loans", "Friends lending"]
-        elif trans_type in ["Loans", "EMI"]:
-            domain_list = [trans_type]
-        else:
-            domain_list = ["Car", "Sheep", "Personal", "Home", "Agri Land", "Friends lending"]
+        if trans_type == "Received": domain_list = ["Salary", "Car", "Sheep", "Personal", "Home", "Agri Land", "Loans", "Friends lending"]
+        elif trans_type in ["Loans", "EMI"]: domain_list = [trans_type]
+        else: domain_list = ["Car", "Sheep", "Personal", "Home", "Agri Land", "Friends lending"]
 
         domain = st.selectbox("Select Domain / Category", domain_list)
         
         sub_category = ""
         extra = {}
 
-        # DYNAMIC LOGIC GATES
         if domain == "Car" and trans_type != "Received":
             sub_category = st.selectbox("Car Category", ["Diesel", "Repair", "Service", "Washing", "Insurance", "Other"])
             extra["Car Name"] = st.text_input("Car Name")
-            if sub_category == "Diesel":
-                extra["Current Odometer (KM)"] = st.number_input("Odometer Reading", min_value=0)
-            if sub_category == "Insurance":
-                extra["Policy Renewal Date"] = str(st.date_input("Renewal Date", date.today()))
-
+            if sub_category == "Diesel": extra["Current Odometer (KM)"] = st.number_input("Odometer Reading", min_value=0)
+            if sub_category == "Insurance": extra["Policy Renewal Date"] = str(st.date_input("Renewal Date", date.today()))
         elif domain == "Sheep" and trans_type != "Received":
             sub_category = st.selectbox("Sheep Category", ["Purchase", "Medical", "Labour", "Feed", "Other"])
             extra["Tag ID / Count"] = st.text_input("Animal Tag ID(s) or Total Count")
             extra["Total Weight (kg)"] = st.number_input("Weight (kg)", min_value=0.0)
-            if sub_category == "Medical":
-                extra["Doctor Name"] = st.text_input("Veterinarian Name")
-
+            if sub_category == "Medical": extra["Doctor Name"] = st.text_input("Veterinarian Name")
         elif domain == "Agri Land" and trans_type != "Received":
             sub_category = st.selectbox("Agri Category", ["Fertilizers", "Pesticide", "Ploughing", "Labour", "Seeds/Plants", "Irrigation", "Fodder"])
             extra["Crop/Season"] = st.text_input("Crop Cycle or Season (e.g., Kharif Corn)")
-            if sub_category in ["Fertilizers", "Pesticide", "Seeds/Plants", "Fodder"]:
-                extra["Quantity & Unit"] = st.text_input("Quantity (e.g., 5 Bags, 10 Liters)")
-
+            if sub_category in ["Fertilizers", "Pesticide", "Seeds/Plants", "Fodder"]: extra["Quantity & Unit"] = st.text_input("Quantity (e.g., 5 Bags, 10 Liters)")
         elif domain == "Personal" and trans_type != "Received":
             sub_category = st.selectbox("Personal Category", ["Food", "Fashion", "Health/Medical", "Subscriptions", "Education", "Gifts/Donations"])
-
         elif domain == "Home" and trans_type != "Received":
             sub_category = st.selectbox("Home Category", ["Household", "Parents", "Occasion/Event", "Appliance/Asset", "Repair"])
-            if sub_category in ["Appliance/Asset", "Repair"]:
-                extra["Asset Name"] = st.text_input("Specific Asset (e.g., Washing Machine, Roof)")
-
+            if sub_category in ["Appliance/Asset", "Repair"]: extra["Asset Name"] = st.text_input("Specific Asset (e.g., Washing Machine, Roof)")
         elif domain == "Friends lending" and trans_type != "Received":
             sub_category = st.selectbox("Lending Detail", ["Lending Out", "Helping", "Other"])
             extra["Agreed Return Amount"] = st.number_input("Expected Return Amount", min_value=0.0)
             extra["Expected Return Date"] = str(st.date_input("When Returning?", date.today()))
             extra["Send Reminder?"] = st.selectbox("Needs Reminder?", ["Yes", "No"])
-
         elif domain == "Loans":
             sub_category = st.selectbox("Asset Loan Against", ["Gold", "Car", "Land", "Personal", "Business"])
             extra["Interest Type"] = st.selectbox("Interest Type", ["Flat Rate", "Reducing Balance"])
             extra["Interest Rate/Amt"] = st.text_input("Interest Rate")
             extra["Tenure (Months)"] = st.number_input("Tenure (Months)", min_value=1)
             extra["Projected End Date"] = str(st.date_input("End Date", date.today()))
-
         elif domain == "EMI":
             sub_category = st.selectbox("Loan Type", ["Personal", "Vehicle", "Home", "Other"])
             extra["Loan Name"] = st.text_input("Loan Name")
@@ -111,35 +94,35 @@ def render_form_tab(csv_file):
         # --- SUBMIT & CONFIRMATION LOGIC ---
         st.markdown("### 💾 Finalize Entry")
         
-        # 1. Define the callback function
-        def reset_form():
-            st.session_state['confirm_save'] = False
-
-        # 2. Render Checkbox
+        def reset_form(): st.session_state['confirm_save'] = False
         confirm = st.checkbox("I confirm that the details entered above are accurate.", key="confirm_save")
 
         action_col, msg_col = st.columns([1, 2])
 
         with action_col:
-            # 3. Render Button with the on_click callback attached
-            save_clicked = st.button("💾 Save Record", type="primary", use_container_width=True, disabled=not confirm, on_click=reset_form)
+            save_clicked = st.button("💾 Save to GitHub", type="primary", use_container_width=True, disabled=not confirm, on_click=reset_form)
 
-        # 4. Process Save & Display Message
-        # This code runs AFTER the callback, so the form is already visually locked, preventing double-saves!
         if save_clicked:
             if amount <= 0 and trans_type not in ["Loans", "EMI"]:
-                with msg_col:
-                    st.error("Please enter a valid amount.")
+                with msg_col: st.error("Please enter a valid amount.")
             else:
-                new_data = pd.DataFrame([{
-                    "Date": entry_date, "Transaction Type": trans_type, "Currency": currency,
-                    "Payment Status": payment_status, "Amount": amount, "Frequency": frequency,
-                    "Payment App": pay_app, "Phone Number": phone_num, "Bank Name": bank_name,
-                    "Person/Org Name": person_org, "Org Name": org_name, "Domain": domain, "Sub-Category": sub_category,
-                    "Description": desc, "Extra Details": json.dumps(extra)
-                }])
-                
-                new_data.to_csv(csv_file, mode='a', header=False, index=False)
-                
-                with msg_col:
-                    st.success(f"✅ Successfully added ₹{amount} to {domain}! Form has been secured.")
+                with st.spinner("Syncing to GitHub..."):
+                    new_data = pd.DataFrame([{
+                        "Date": entry_date, "Transaction Type": trans_type, "Currency": currency,
+                        "Payment Status": payment_status, "Amount": amount, "Frequency": frequency,
+                        "Payment App": pay_app, "Phone Number": phone_num, "Bank Name": bank_name,
+                        "Person/Org Name": person_org, "Org Name": org_name, "Domain": domain, "Sub-Category": sub_category,
+                        "Description": desc, "Extra Details": json.dumps(extra)
+                    }])
+                    
+                    # 1. Pull the latest DB from GitHub
+                    current_df = load_data()
+                    
+                    # 2. Append the new row
+                    updated_df = pd.concat([current_df, new_data], ignore_index=True)
+                    
+                    # 3. Push it back
+                    success = save_data_to_github(updated_df, commit_message=f"Added {domain} transaction")
+                    
+                    if success:
+                        with msg_col: st.success(f"✅ Securely synced ₹{amount} to {domain} in GitHub!")
