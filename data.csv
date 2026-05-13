@@ -1,2 +1,3 @@
 Date,Transaction Type,Currency,Payment Status,Amount,Frequency,Payment App,Phone Number,Bank Name,Person/Org Name,Org Name,Domain,Sub-Category,Description,Extra Details
 2026-05-13,Paid,INR (₹),Completed / Received,500.0,One-time,PhonePe,9550927050,SBI,Prakash,Personal,Personal,Food,Sample Entry,"{""Note"": ""Initial Setup""}"
+2026-05-13,Paid,INR (₹),Completed / Received,300.0,One-time,PhonePe,9550927050,Indian Bank,,,Car,Diesel,,"{""Car Name"": """", ""Current Odometer (KM)"": 0}"
