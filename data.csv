@@ -1,3 +1,4 @@
 Date,Transaction Type,Payment Status,Amount,Frequency,Payment App,Phone Number,Bank Name,Person/Org Name,Org Name,Domain,Sub-Category,Description,Extra Details
 2026-05-15,Expenditure,Completed / Received,3200.0,One-time,GPay,9550927050,SBI,HP Fuel Station,,Car,Diesel,Full tank refill,"{""Shop/Org Name"": ""HP Bunk"", ""Current Odometer (KM)"": 89550, ""Price per litre"": 98.5}"
 2026-05-15,Expenditure,Completed / Received,300.0,One-time,PhonePe,9550927050,Indian Bank,,,Car,Diesel,,"{""Shop/Org Name"": """", ""Current Odometer (KM)"": 89400, ""Price per litre"": 0.0}"
+2026-05-13,Expenditure,Completed / Received,100.0,One-time,PhonePe,9550927050,Indian Bank,,,Car,Diesel,,"{""Shop/Org Name"": """", ""Current Odometer (KM)"": 89400, ""Price per litre"": 0.0}"
