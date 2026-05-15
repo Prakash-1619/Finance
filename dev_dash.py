@@ -18,7 +18,7 @@ st.markdown("Dynamic cross-filtering dashboard with real-time aggregation.")
 def load_and_prepare_data(file_path):
     # 1. Load Data
     # Replace this with your actual combined merged dataset path
-    df = pd.read_csv(file_path)
+    df = pd.read_parquet(parquet_path)
     
     # 2. Market Mappings
     market_mappings = {
@@ -82,7 +82,7 @@ def load_and_prepare_data(file_path):
 # Load the data (Update the path to your actual CSV or Parquet file)
 # If you already have the parquet, you can change the loader above to pd.read_parquet()
 try:
-    df_main = load_and_prepare_data("your_combined_data.csv")
+    df_main = load_and_prepare_data("combined_df_2020.parquet")
     st.sidebar.success("✅ Data Loaded & Saved to Parquet!")
 except Exception as e:
     st.error(f"Error loading data. Please check your file path. Details: {e}")
