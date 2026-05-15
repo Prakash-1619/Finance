@@ -1,0 +1,303 @@
+import streamlit as st
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+
+# ---------------------------------------------------------
+# 1. PAGE CONFIGURATION
+# ---------------------------------------------------------
+st.set_page_config(page_title="Ultimate Market Intelligence", layout="wide", page_icon="🏢")
+st.title("🏢 Ultimate Real Estate Market Intelligence")
+st.markdown("Dynamic cross-filtering dashboard with real-time aggregation.")
+
+# ---------------------------------------------------------
+# 2. DATA LOADING & PREPARATION (CACHED)
+# ---------------------------------------------------------
+@st.cache_data
+def load_and_prepare_data(file_path):
+    # 1. Load Data
+    # Replace this with your actual combined merged dataset path
+    df = pd.read_csv(file_path)
+    
+    # 2. Market Mappings
+    market_mappings = {
+        'direct_areas': [
+            "Al Barsha South Fourth", "Business Bay", "Al Merkadh", "Burj Khalifa",
+            "Hadaeq Sheikh Mohammed Bin Rashid", "Al Khairan First", "Wadi Al Safa 5",
+            "Al Thanyah Fifth", "Al Barshaa South Third", "Jabal Ali First",
+            "Madinat Al Mataar", "Madinat Dubai Almelaheyah", "Me'Aisem First",
+            "Al Hebiah Fourth", "Al Barsha South Fifth", "Al Hebiah First",
+            "Nadd Hessa", "Palm Jumeirah", "Al Barshaa South Second",
+            "Al Yelayiss 2", "Al Warsan First", "Marsa Dubai"
+        ],
+        'proxies': {
+            'G1': ['Wadi Al Safa 4', 'Al Kifaf'],
+            'G2': ['Dubai Investment Park First', 'Wadi Al Safa 7'],
+            'G3': ['Warsan Fourth', 'Jabal Ali'],
+            'G4': ['Zaabeel Second', 'Zaabeel First'],
+            'G5': ['Saih Shuaib 2', 'Nad Al Shiba First'],
+            'Proxy1': ['Al Barsha South Fourth', 'Al Barshaa South Third', 'Al Yelayiss 2'],
+            'Proxy2': ['Bukadra', 'Madinat Dubai Almelaheyah'],
+            'Proxy3': ['Jabal Ali First', "Me'Aisem First"]
+        }
+    }
+    
+    proxy_map = {area: group for group, areas in market_mappings['proxies'].items() for area in areas}
+    def map_segment(area):
+        if area in proxy_map: return proxy_map[area]
+        if area in market_mappings['direct_areas']: return area
+        return 'Other'
+
+    # Apply mappings
+    df['market_segment'] = df['area_name_en'].apply(map_segment)
+    df = df[df['market_segment'] != 'Other'].copy()
+
+    # 3. Format Dates & Durations
+    df['instance_date'] = pd.to_datetime(df['instance_date'], errors='coerce')
+    df['project_start_date'] = pd.to_datetime(df['project_start_date'], errors='coerce')
+    df['month_year'] = df['instance_date'].dt.strftime('%b-%Y')
+    
+    # First transaction date per project
+    proj_first_trans = df.groupby('project_name_en')['instance_date'].min().reset_index()
+    proj_first_trans.rename(columns={'instance_date': 'first_trans_date'}, inplace=True)
+    df = df.merge(proj_first_trans, on='project_name_en', how='left')
+    df['start_to_trans_days'] = (df['first_trans_date'] - df['project_start_date']).dt.days.fillna(0)
+    
+    # Ensure units/prices are numeric
+    df['no_of_units'] = pd.to_numeric(df['no_of_units'], errors='coerce').fillna(0)
+    df['meter_sale_price'] = pd.to_numeric(df['meter_sale_price'], errors='coerce').fillna(0)
+    
+    # Drop rows without a developer
+    df = df.dropna(subset=['developer_name_en'])
+    
+    # ---------------------------------------------------------
+    # SAVE AS PARQUET (As Requested)
+    # ---------------------------------------------------------
+    parquet_path = "processed_market_data.parquet"
+    df.to_parquet(parquet_path, index=False)
+    
+    return df
+
+# Load the data (Update the path to your actual CSV or Parquet file)
+# If you already have the parquet, you can change the loader above to pd.read_parquet()
+try:
+    df_main = load_and_prepare_data("your_combined_data.csv")
+    st.sidebar.success("✅ Data Loaded & Saved to Parquet!")
+except Exception as e:
+    st.error(f"Error loading data. Please check your file path. Details: {e}")
+    st.stop()
+
+# ---------------------------------------------------------
+# 3. DYNAMIC CROSS-FILTERING ENGINE (SIDEBAR)
+# ---------------------------------------------------------
+st.sidebar.header("🎯 Dynamic Filters")
+
+# We apply filters step-by-step to cascade the available options
+filtered_df = df_main.copy()
+
+# Filter 1: Developer
+devs = st.sidebar.multiselect("Developer", sorted(filtered_df['developer_name_en'].unique()))
+if devs: filtered_df = filtered_df[filtered_df['developer_name_en'].isin(devs)]
+
+# Filter 2: Market Segment
+segs = st.sidebar.multiselect("Market Segment", sorted(filtered_df['market_segment'].unique()))
+if segs: filtered_df = filtered_df[filtered_df['market_segment'].isin(segs)]
+
+# Filter 3: Project
+projs = st.sidebar.multiselect("Project", sorted(filtered_df['project_name_en'].dropna().unique()))
+if projs: filtered_df = filtered_df[filtered_df['project_name_en'].isin(projs)]
+
+# Filter 4: Reg Type
+regs = st.sidebar.multiselect("Reg Type", sorted(filtered_df['reg_type_en'].dropna().unique()))
+if regs: filtered_df = filtered_df[filtered_df['reg_type_en'].isin(regs)]
+
+# Filter 5: Room Type
+rooms = st.sidebar.multiselect("Room Type", sorted(filtered_df['rooms_en'].dropna().unique()))
+if rooms: filtered_df = filtered_df[filtered_df['rooms_en'].isin(rooms)]
+
+# Filter 6: Month-Year (Sorted Chronologically)
+sorted_months = sorted(filtered_df['month_year'].dropna().unique(), key=lambda x: pd.to_datetime(x, format='%b-%Y'))
+months = st.sidebar.multiselect("Month-Year", sorted_months)
+if months: filtered_df = filtered_df[filtered_df['month_year'].isin(months)]
+
+
+# ---------------------------------------------------------
+# 4. KPI METRICS
+# ---------------------------------------------------------
+if filtered_df.empty:
+    st.warning("No data matches the selected filters.")
+    st.stop()
+
+# Calculations
+total_trans = len(filtered_df)
+avg_price = filtered_df['meter_sale_price'].median()
+unique_projs = filtered_df['project_name_en'].nunique()
+total_units = filtered_df.drop_duplicates(subset=['project_number'])['no_of_units'].sum()
+
+col1, col2, col3, col4 = st.columns(4)
+col1.metric("Total Transactions", f"{total_trans:,}")
+col2.metric("Median Price (AED/Sqm)", f"{avg_price:,.0f}")
+col3.metric("Unique Projects", f"{unique_projs:,}")
+col4.metric("Total Units Launched", f"{total_units:,.0f}")
+
+st.markdown("---")
+
+# ---------------------------------------------------------
+# 5. DASHBOARD TABS
+# ---------------------------------------------------------
+tab1, tab2, tab3, tab4 = st.tabs([
+    "📈 Market Overview", 
+    "🏢 Project Deep Dive", 
+    "📊 Data Table",
+    "⭐ Developer Matrix (New!)"
+])
+
+# --- TAB 1: MARKET OVERVIEW ---
+with tab1:
+    st.subheader("Price & Volume Seasonality Trend")
+    # Aggregate data for dual-axis chart
+    season_agg = filtered_df.groupby('month_year').agg(
+        volume=('transaction_id', 'count'),
+        median_price=('meter_sale_price', 'median')
+    ).reset_index()
+    # Sort chronologically
+    season_agg['sort_date'] = pd.to_datetime(season_agg['month_year'], format='%b-%Y')
+    season_agg = season_agg.sort_values('sort_date')
+    
+    fig_season = make_subplots(specs=[[{"secondary_y": True}]])
+    fig_season.add_trace(
+        go.Bar(x=season_agg['month_year'], y=season_agg['volume'], name="Volume", opacity=0.4, marker_color='slategray'),
+        secondary_y=False,
+    )
+    fig_season.add_trace(
+        go.Scatter(x=season_agg['month_year'], y=season_agg['median_price'], name="Median Price", mode='lines+markers', line=dict(color='royalblue', width=3)),
+        secondary_y=True,
+    )
+    fig_season.update_layout(height=400, margin=dict(l=0, r=0, t=30, b=0), hovermode="x unified")
+    st.plotly_chart(fig_season, use_container_width=True)
+
+    
+    colA, colB = st.columns(2)
+    with colA:
+        st.subheader("Segment Performance Heatmap")
+        # Ensure correct sorting
+        filtered_df['sort_date'] = pd.to_datetime(filtered_df['month_year'], format='%b-%Y')
+        sorted_df = filtered_df.sort_values('sort_date')
+        
+        fig_heat = px.density_heatmap(
+            sorted_df, x="month_year", y="market_segment", z="meter_sale_price", 
+            histfunc="median", color_continuous_scale="Viridis"
+        )
+        fig_heat.update_layout(height=400, margin=dict(l=0, r=0, t=30, b=0))
+        st.plotly_chart(fig_heat, use_container_width=True)
+        
+    with colB:
+        st.subheader("Top Developer Activity Heatmap")
+        # Get top 15 devs by transaction volume
+        top_devs = filtered_df['developer_name_en'].value_counts().nlargest(15).index
+        dev_heat_df = sorted_df[sorted_df['developer_name_en'].isin(top_devs)]
+        
+        fig_dev_heat = px.density_heatmap(
+            dev_heat_df, x="month_year", y="developer_name_en", 
+            color_continuous_scale="Blues"
+        )
+        fig_dev_heat.update_layout(height=400, margin=dict(l=0, r=0, t=30, b=0))
+        st.plotly_chart(fig_dev_heat, use_container_width=True)
+
+
+# --- TAB 2: PROJECT DEEP DIVE ---
+with tab2:
+    colC, colD = st.columns(2)
+    
+    with colC:
+        st.subheader("Reg Type vs Median Prices (Top 20 Projects)")
+        # Top 20 projects by transaction count
+        top_projs = filtered_df['project_name_en'].value_counts().nlargest(20).index
+        reg_df = filtered_df[filtered_df['project_name_en'].isin(top_projs)]
+        reg_agg = reg_df.groupby(['project_name_en', 'reg_type_en'])['meter_sale_price'].median().reset_index()
+        
+        fig_reg = px.bar(reg_agg, x='project_name_en', y='meter_sale_price', color='reg_type_en', barmode='group')
+        fig_reg.update_layout(height=400, margin=dict(l=0, r=0, t=30, b=0), xaxis_title="", legend_title="Reg Type")
+        st.plotly_chart(fig_reg, use_container_width=True)
+        
+    with colD:
+        st.subheader("Launch vs First Transaction Gap (Days)")
+        dur_df = filtered_df.drop_duplicates(subset=['project_name_en']).nlargest(15, 'start_to_trans_days')
+        fig_dur = px.bar(dur_df, x='start_to_trans_days', y='project_name_en', orientation='h', color_discrete_sequence=['#8b5cf6'])
+        fig_dur.update_layout(height=400, margin=dict(l=0, r=0, t=30, b=0), yaxis={'categoryorder':'total ascending'})
+        st.plotly_chart(fig_dur, use_container_width=True)
+
+    st.subheader("Room-wise Price Trend")
+    room_agg = filtered_df.groupby(['month_year', 'rooms_en']).agg(
+        median_price=('meter_sale_price', 'median')
+    ).reset_index()
+    room_agg['sort_date'] = pd.to_datetime(room_agg['month_year'], format='%b-%Y')
+    room_agg = room_agg.sort_values('sort_date')
+    
+    fig_room = px.line(room_agg, x='month_year', y='median_price', color='rooms_en', markers=True)
+    fig_room.update_layout(height=400, margin=dict(l=0, r=0, t=30, b=0), hovermode="x unified")
+    st.plotly_chart(fig_room, use_container_width=True)
+
+
+# --- TAB 3: DATA TABLE ---
+with tab3:
+    st.subheader("Granular Data View")
+    
+    table_agg = filtered_df.groupby([
+        'developer_name_en', 'market_segment', 'project_name_en', 
+        'reg_type_en', 'rooms_en', 'month_year'
+    ]).agg(
+        median_price=('meter_sale_price', 'median'),
+        transaction_count=('transaction_id', 'count')
+    ).reset_index().sort_values(by='transaction_count', ascending=False)
+    
+    # Apply styling to dataframe
+    st.dataframe(
+        table_agg.style.format({
+            "median_price": "AED {:,.2f}",
+            "transaction_count": "{:,}"
+        }), 
+        use_container_width=True, 
+        height=600
+    )
+
+# --- TAB 4: NEW EXTRA FEATURE (DEVELOPER MATRIX) ---
+with tab4:
+    st.subheader("⭐ Strategic Developer Matrix")
+    st.markdown("Analyze developers by identifying who pushes high **volumes**, who commands **premium prices**, and the **scale** of their project unit launches.")
+    
+    matrix_agg = filtered_df.groupby('developer_name_en').agg(
+        median_price=('meter_sale_price', 'median'),
+        total_transactions=('transaction_id', 'count'),
+        # Get unique units per project so it doesn't inflate
+        total_units_launched=('no_of_units', lambda x: filtered_df.loc[x.index].drop_duplicates('project_number')['no_of_units'].sum())
+    ).reset_index()
+    
+    # Filter out small data for a cleaner chart
+    matrix_agg = matrix_agg[matrix_agg['total_transactions'] > 5]
+    
+    fig_matrix = px.scatter(
+        matrix_agg, 
+        x="total_transactions", 
+        y="median_price", 
+        size="total_units_launched", 
+        color="developer_name_en",
+        hover_name="developer_name_en",
+        size_max=60,
+        labels={
+            "total_transactions": "Transaction Volume (Sales Speed)",
+            "median_price": "Median Price AED/Sqm (Premium Status)",
+            "total_units_launched": "Scale (Total Units)"
+        }
+    )
+    
+    # Add quadrant lines based on median values
+    x_mid = matrix_agg['total_transactions'].median()
+    y_mid = matrix_agg['median_price'].median()
+    
+    fig_matrix.add_hline(y=y_mid, line_dash="dot", line_color="gray", opacity=0.5)
+    fig_matrix.add_vline(x=x_mid, line_dash="dot", line_color="gray", opacity=0.5)
+    
+    fig_matrix.update_layout(height=600, showlegend=False, margin=dict(l=0, r=0, t=30, b=0))
+    st.plotly_chart(fig_matrix, use_container_width=True)
