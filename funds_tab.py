@@ -50,7 +50,9 @@ def render_flexible_plots(df, key_prefix):
                     col_name = selected_plots[i+j]
                     with cols[j]:
                         fig_data = df.groupby(col_name)['Amount'].sum().reset_index()
-                        st.plotly_chart(px.pie(fig_data, values='Amount', names=col_name, title=f"Total by {col_name}", hole=0.4), use_container_width=True)
+                        fig = px.pie(fig_data, values='Amount', names=col_name, title=f"Total by {col_name}", hole=0.4)
+                        # FIXED: Added unique key using prefix and column name
+                        st.plotly_chart(fig, use_container_width=True, key=f"pie_{key_prefix}_{col_name}")
 
 def render_delete_interface(df_subset, domain_name):
     st.markdown(f"### 🗑️ Manage & Delete Records")
@@ -111,7 +113,10 @@ def render_domain_dashboard(domain_name, tab_obj, global_df):
             ts_df['Date'] = pd.to_datetime(ts_df['Date'])
             freq_map = {"Daily": "D", "Weekly": "W", "Monthly": "ME", "Quarterly": "QE"}
             ts_res = ts_df.set_index('Date').groupby('Transaction Type').resample(freq_map[freq])['Amount'].agg(agg.lower()).reset_index()
-            st.plotly_chart(px.line(ts_res, x='Date', y='Amount', color='Transaction Type', markers=True, title=f"{freq} Trend"), use_container_width=True)
+            
+            # FIXED: Added unique key
+            fig_ts = px.line(ts_res, x='Date', y='Amount', color='Transaction Type', markers=True, title=f"{freq} Trend")
+            st.plotly_chart(fig_ts, use_container_width=True, key=f"line_bal_{domain_name}")
 
             render_flexible_plots(filt_dom, f"bal_{domain_name}")
 
@@ -171,7 +176,10 @@ def render_funds_tab(data):
         ts_g['Date'] = pd.to_datetime(ts_g['Date'])
         freq_map = {"Daily": "D", "Weekly": "W", "Monthly": "ME", "Quarterly": "QE"}
         ts_res_g = ts_g.set_index('Date').groupby('Transaction Type').resample(freq_map[g_freq])['Amount'].agg(g_agg.lower()).reset_index()
-        st.plotly_chart(px.line(ts_res_g, x='Date', y='Amount', color='Transaction Type', markers=True, title="Income vs Expenditure Trend"), use_container_width=True)
+        
+        # FIXED: Added unique key
+        fig_g = px.line(ts_res_g, x='Date', y='Amount', color='Transaction Type', markers=True, title="Income vs Expenditure Trend")
+        st.plotly_chart(fig_g, use_container_width=True, key="line_trend_global_overview")
 
         render_flexible_plots(filt_g, "global_overview")
         st.dataframe(filt_g.sort_values('Date', ascending=False), use_container_width=True)
@@ -193,7 +201,10 @@ def render_funds_tab(data):
             ts_i = filt_inc.copy()
             ts_i['Date'] = pd.to_datetime(ts_i['Date'])
             ts_res_i = ts_i.set_index('Date').groupby('Domain').resample(freq_map[i_freq])['Amount'].agg(i_agg.lower()).reset_index()
-            st.plotly_chart(px.line(ts_res_i, x='Date', y='Amount', color='Domain', markers=True, title="Income Trend by Domain"), use_container_width=True)
+            
+            # FIXED: Added unique key
+            fig_i = px.line(ts_res_i, x='Date', y='Amount', color='Domain', markers=True, title="Income Trend by Domain")
+            st.plotly_chart(fig_i, use_container_width=True, key="line_trend_global_inc")
 
         render_flexible_plots(filt_inc, "global_inc_plots")
         st.dataframe(filt_inc.sort_values('Date', ascending=False), use_container_width=True)
@@ -215,7 +226,10 @@ def render_funds_tab(data):
             ts_e = filt_exp.copy()
             ts_e['Date'] = pd.to_datetime(ts_e['Date'])
             ts_res_e = ts_e.set_index('Date').groupby('Domain').resample(freq_map[e_freq])['Amount'].agg(e_agg.lower()).reset_index()
-            st.plotly_chart(px.line(ts_res_e, x='Date', y='Amount', color='Domain', markers=True, title="Expenditure Trend by Domain"), use_container_width=True)
+            
+            # FIXED: Added unique key
+            fig_e = px.line(ts_res_e, x='Date', y='Amount', color='Domain', markers=True, title="Expenditure Trend by Domain")
+            st.plotly_chart(fig_e, use_container_width=True, key="line_trend_global_exp")
 
         render_flexible_plots(filt_exp, "global_exp_plots")
         st.dataframe(filt_exp.sort_values('Date', ascending=False), use_container_width=True)
