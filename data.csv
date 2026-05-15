@@ -4,3 +4,4 @@ Date,Transaction Type,Currency,Payment Status,Amount,Frequency,Payment App,Phone
 2026-05-13,Received,INR (₹),Completed / Received,10000.0,One-time,PhonePe,9550927050,Indian Bank,Prakash,,Salary,,,{}
 2026-03-01,Received,INR (₹),Completed / Received,10000.0,One-time,PhonePe,9550927050,Indian Bank,Prakash,,Salary,,,{}
 2026-05-15,Expenditure,,Completed / Received,30.0,One-time,PhonePe,9550927050,Indian Bank,Nav,,Friends lending,Lending Out,,"{""Agreed Return Amount"": 0.0, ""Expected Return Date"": ""2026-05-15"", ""Send Reminder?"": ""Yes""}"
+2026-05-15,Income,,Completed / Received,30.0,One-time,PhonePe,9550927050,Indian Bank,Nav,,Friends lending,,,{}
