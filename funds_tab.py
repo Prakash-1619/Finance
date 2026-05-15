@@ -83,15 +83,21 @@ def render_delete_interface(df_subset, domain_name):
             st.success("Deleted!")
             st.rerun()
 
-def render_domain_dashboard(domain_name, tab_obj, global_df):
+def render_domain_dashboard(domain_name, tab_obj, df_raw, start_date, end_date):
     with tab_obj:
-        domain_df = global_df[global_df['Domain'] == domain_name].copy()
-        if domain_df.empty:
+        # 1. Get ALL TIME data for this domain
+        domain_df_all = df_raw[df_raw['Domain'] == domain_name].copy()
+        if domain_df_all.empty:
             st.info(f"No records for {domain_name}.")
             return
 
-        clean_dom = get_clean_data(domain_df)
-        filt_dom = apply_dynamic_filters(clean_dom, f"dom_{domain_name}")
+        # 2. Clean and apply Dynamic Filters to the ALL TIME data
+        clean_dom_all = get_clean_data(domain_df_all)
+        filt_dom_all = apply_dynamic_filters(clean_dom_all, f"dom_{domain_name}")
+        
+        # 3. Create the Time-Filtered slice for the regular metrics & tables
+        mask_time = (filt_dom_all['Date'] >= start_date) & (filt_dom_all['Date'] <= end_date)
+        filt_dom = filt_dom_all[mask_time]
         
         d_tabs = st.tabs(["📊 Balance Sheet", "🟥 Expenditure", "🟩 Income", "⚙️ Manage & Delete"])
         
@@ -99,42 +105,47 @@ def render_domain_dashboard(domain_name, tab_obj, global_df):
             inc_val = filt_dom[filt_dom['Transaction Type'].isin(['Income', 'Received'])]['Amount'].sum()
             exp_val = filt_dom[filt_dom['Transaction Type'].isin(['Expenditure', 'Paid'])]['Amount'].sum()
             m1, m2, m3 = st.columns(3)
-            m1.metric("Total Income", f"₹{inc_val:,.2f}")
-            m2.metric("Total Exp.", f"₹{exp_val:,.2f}")
-            m3.metric("Net Balance", f"₹{(inc_val - exp_val):,.2f}")
+            m1.metric("Total Income (Period)", f"₹{inc_val:,.2f}")
+            m2.metric("Total Exp. (Period)", f"₹{exp_val:,.2f}")
+            m3.metric("Net Balance (Period)", f"₹{(inc_val - exp_val):,.2f}")
             
-            # Sub-domain time series
             c1, c2 = st.columns(2)
             with c1: freq = st.selectbox("Frequency", ["Daily", "Weekly", "Monthly", "Quarterly"], key=f"f_{domain_name}")
             with c2: agg = st.selectbox("Metric", ["Sum", "Mean"], key=f"a_{domain_name}")
             
+            # Sub-domain Periodic Trend
             ts_df = filt_dom.copy()
             ts_df['Date'] = pd.to_datetime(ts_df['Date'])
             freq_map = {"Daily": "D", "Weekly": "W", "Monthly": "ME", "Quarterly": "QE"}
             ts_res = ts_df.set_index('Date').groupby('Transaction Type').resample(freq_map[freq])['Amount'].agg(agg.lower()).reset_index()
             
-            fig_ts = px.line(ts_res, x='Date', y='Amount', color='Transaction Type', markers=True, title=f"{freq} Trend")
+            fig_ts = px.line(ts_res, x='Date', y='Amount', color='Transaction Type', markers=True, title=f"{freq} Trend (Selected Period)")
             st.plotly_chart(fig_ts, use_container_width=True, key=f"line_bal_{domain_name}")
 
             render_flexible_plots(filt_dom, f"bal_{domain_name}")
 
-            # --- NEW: Net Balance Time Series Plot ---
-            if not ts_res.empty:
-                st.markdown("#### 📉 Net Balance Over Time")
-                net_df_d = ts_res.copy()
+            # --- CUMULATIVE NET BALANCE (ALL TIME) ---
+            ts_dom_all = filt_dom_all.copy()
+            ts_dom_all['Date'] = pd.to_datetime(ts_dom_all['Date'])
+            ts_res_all = ts_dom_all.set_index('Date').groupby('Transaction Type').resample(freq_map[freq])['Amount'].agg(agg.lower()).reset_index()
+
+            if not ts_res_all.empty:
+                st.markdown("#### 📉 Cumulative Net Balance (All-Time Net Flow)")
+                net_df_d = ts_res_all.copy()
                 net_df_d['Type'] = net_df_d['Transaction Type'].replace({'Received': 'Income', 'Paid': 'Expenditure'})
                 net_pivot_d = net_df_d.pivot_table(index='Date', columns='Type', values='Amount', aggfunc='sum').fillna(0)
                 for col in ['Income', 'Expenditure']:
                     if col not in net_pivot_d.columns:
                         net_pivot_d[col] = 0
                 
+                # Calculate Running Cumulative Sum
                 net_pivot_d['Net Balance'] = net_pivot_d['Income'] - net_pivot_d['Expenditure']
+                net_pivot_d['Cumulative Net'] = net_pivot_d['Net Balance'].cumsum()
                 net_pivot_d = net_pivot_d.reset_index()
                 
-                fig_net_d = px.line(net_pivot_d, x='Date', y='Net Balance', markers=True, title=f"Net Balance Trend ({freq})")
-                fig_net_d.add_hline(y=0, line_dash="dash", line_color="gray") # Adds a zero-line for reference
+                fig_net_d = px.line(net_pivot_d, x='Date', y='Cumulative Net', markers=True, title=f"All-Time Net Flow ({freq})")
+                fig_net_d.add_hline(y=0, line_dash="dash", line_color="gray")
                 st.plotly_chart(fig_net_d, use_container_width=True, key=f"net_bal_plot_{domain_name}")
-            # ----------------------------------------
 
         with d_tabs[1]: # Expenditure
             exp_df = filt_dom[filt_dom['Transaction Type'].isin(['Expenditure', 'Paid'])]
@@ -166,23 +177,28 @@ def render_funds_tab(data):
     if time_period == "This Month": start_date = today.replace(day=1)
     elif time_period == "This Year": start_date = today.replace(month=1, day=1)
     
+    # We still create the time-filtered df for the Global Income/Expenditure tabs
     df = df_raw[(df_raw['Date'] >= start_date) & (df_raw['Date'] <= end_date)].copy()
     tabs = st.tabs(["📊 Overview", "🟩 Income", "🟥 Expenditure", "💸 Loans", "🚗 Car", "🐄 Cows", "🐑 Sheep", "🌱 Agri", "🏠 Home", "🧍 Personal", "🤝 Friends"])
 
     # 1. GLOBAL OVERVIEW
     with tabs[0]: 
-        master = get_clean_data(df)
-        filt_g = apply_dynamic_filters(master, "global")
+        master_all = get_clean_data(df_raw)
+        filt_g_all = apply_dynamic_filters(master_all, "global")
+        
+        # Apply Time Filter for metrics
+        mask_g = (filt_g_all['Date'] >= start_date) & (filt_g_all['Date'] <= end_date)
+        filt_g = filt_g_all[mask_g]
         
         # Global Metrics
         inc_val = filt_g[filt_g['Transaction Type'].isin(['Income', 'Received'])]['Amount'].sum()
         exp_val = filt_g[filt_g['Transaction Type'].isin(['Expenditure', 'Paid'])]['Amount'].sum()
         g1, g2, g3 = st.columns(3)
-        g1.metric("Global Income", f"₹{inc_val:,.2f}")
-        g2.metric("Global Expenditure", f"₹{exp_val:,.2f}")
-        g3.metric("Global Net Balance", f"₹{(inc_val - exp_val):,.2f}")
+        g1.metric("Global Income (Period)", f"₹{inc_val:,.2f}")
+        g2.metric("Global Expenditure (Period)", f"₹{exp_val:,.2f}")
+        g3.metric("Global Net Balance (Period)", f"₹{(inc_val - exp_val):,.2f}")
         
-        # Global Time Series
+        # Periodic Global Time Series
         st.markdown("#### ⏳ Global Time Trend")
         tc1, tc2 = st.columns(2)
         with tc1: g_freq = st.selectbox("Frequency", ["Daily", "Weekly", "Monthly", "Quarterly"], key="g_freq_overview")
@@ -193,28 +209,33 @@ def render_funds_tab(data):
         freq_map = {"Daily": "D", "Weekly": "W", "Monthly": "ME", "Quarterly": "QE"}
         ts_res_g = ts_g.set_index('Date').groupby('Transaction Type').resample(freq_map[g_freq])['Amount'].agg(g_agg.lower()).reset_index()
         
-        fig_g = px.line(ts_res_g, x='Date', y='Amount', color='Transaction Type', markers=True, title="Income vs Expenditure Trend")
+        fig_g = px.line(ts_res_g, x='Date', y='Amount', color='Transaction Type', markers=True, title="Income vs Expenditure (Selected Period)")
         st.plotly_chart(fig_g, use_container_width=True, key="line_trend_global_overview")
 
         render_flexible_plots(filt_g, "global_overview")
         
-        # --- NEW: Global Net Balance Time Series Plot ---
-        if not ts_res_g.empty:
-            st.markdown("#### 📉 Global Net Balance Over Time")
-            net_df_g = ts_res_g.copy()
+        # --- CUMULATIVE GLOBAL NET BALANCE (ALL TIME) ---
+        ts_g_all = filt_g_all.copy()
+        ts_g_all['Date'] = pd.to_datetime(ts_g_all['Date'])
+        ts_res_g_all = ts_g_all.set_index('Date').groupby('Transaction Type').resample(freq_map[g_freq])['Amount'].agg(g_agg.lower()).reset_index()
+
+        if not ts_res_g_all.empty:
+            st.markdown("#### 📉 Cumulative Global Net Balance (All-Time Net Flow)")
+            net_df_g = ts_res_g_all.copy()
             net_df_g['Type'] = net_df_g['Transaction Type'].replace({'Received': 'Income', 'Paid': 'Expenditure'})
             net_pivot_g = net_df_g.pivot_table(index='Date', columns='Type', values='Amount', aggfunc='sum').fillna(0)
             for col in ['Income', 'Expenditure']:
                 if col not in net_pivot_g.columns:
                     net_pivot_g[col] = 0
             
+            # Calculate Running Cumulative Sum
             net_pivot_g['Net Balance'] = net_pivot_g['Income'] - net_pivot_g['Expenditure']
+            net_pivot_g['Cumulative Net'] = net_pivot_g['Net Balance'].cumsum()
             net_pivot_g = net_pivot_g.reset_index()
             
-            fig_net_g = px.line(net_pivot_g, x='Date', y='Net Balance', markers=True, title=f"Global Net Balance Trend ({g_freq})")
-            fig_net_g.add_hline(y=0, line_dash="dash", line_color="gray") # Adds a zero-line for reference
+            fig_net_g = px.line(net_pivot_g, x='Date', y='Cumulative Net', markers=True, title=f"All-Time Global Net Flow ({g_freq})")
+            fig_net_g.add_hline(y=0, line_dash="dash", line_color="gray")
             st.plotly_chart(fig_net_g, use_container_width=True, key="net_bal_plot_global")
-        # ------------------------------------------------
 
         st.dataframe(filt_g.sort_values('Date', ascending=False), use_container_width=True)
 
@@ -265,4 +286,5 @@ def render_funds_tab(data):
     # 4. DOMAIN DASHBOARDS
     dom_list = ["Car", "Cows", "Sheep", "Agri Land", "Home", "Personal", "Friends lending"]
     for i, d_name in enumerate(dom_list):
-        render_domain_dashboard(d_name, tabs[i+4], df)
+        # We pass df_raw directly into the domains to allow all-time cumulative math!
+        render_domain_dashboard(d_name, tabs[i+4], df_raw, start_date, end_date)
