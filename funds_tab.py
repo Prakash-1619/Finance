@@ -51,7 +51,6 @@ def render_flexible_plots(df, key_prefix):
                     with cols[j]:
                         fig_data = df.groupby(col_name)['Amount'].sum().reset_index()
                         fig = px.pie(fig_data, values='Amount', names=col_name, title=f"Total by {col_name}", hole=0.4)
-                        # FIXED: Added unique key using prefix and column name
                         st.plotly_chart(fig, use_container_width=True, key=f"pie_{key_prefix}_{col_name}")
 
 def render_delete_interface(df_subset, domain_name):
@@ -114,11 +113,28 @@ def render_domain_dashboard(domain_name, tab_obj, global_df):
             freq_map = {"Daily": "D", "Weekly": "W", "Monthly": "ME", "Quarterly": "QE"}
             ts_res = ts_df.set_index('Date').groupby('Transaction Type').resample(freq_map[freq])['Amount'].agg(agg.lower()).reset_index()
             
-            # FIXED: Added unique key
             fig_ts = px.line(ts_res, x='Date', y='Amount', color='Transaction Type', markers=True, title=f"{freq} Trend")
             st.plotly_chart(fig_ts, use_container_width=True, key=f"line_bal_{domain_name}")
 
             render_flexible_plots(filt_dom, f"bal_{domain_name}")
+
+            # --- NEW: Net Balance Time Series Plot ---
+            if not ts_res.empty:
+                st.markdown("#### 📉 Net Balance Over Time")
+                net_df_d = ts_res.copy()
+                net_df_d['Type'] = net_df_d['Transaction Type'].replace({'Received': 'Income', 'Paid': 'Expenditure'})
+                net_pivot_d = net_df_d.pivot_table(index='Date', columns='Type', values='Amount', aggfunc='sum').fillna(0)
+                for col in ['Income', 'Expenditure']:
+                    if col not in net_pivot_d.columns:
+                        net_pivot_d[col] = 0
+                
+                net_pivot_d['Net Balance'] = net_pivot_d['Income'] - net_pivot_d['Expenditure']
+                net_pivot_d = net_pivot_d.reset_index()
+                
+                fig_net_d = px.line(net_pivot_d, x='Date', y='Net Balance', markers=True, title=f"Net Balance Trend ({freq})")
+                fig_net_d.add_hline(y=0, line_dash="dash", line_color="gray") # Adds a zero-line for reference
+                st.plotly_chart(fig_net_d, use_container_width=True, key=f"net_bal_plot_{domain_name}")
+            # ----------------------------------------
 
         with d_tabs[1]: # Expenditure
             exp_df = filt_dom[filt_dom['Transaction Type'].isin(['Expenditure', 'Paid'])]
@@ -177,11 +193,29 @@ def render_funds_tab(data):
         freq_map = {"Daily": "D", "Weekly": "W", "Monthly": "ME", "Quarterly": "QE"}
         ts_res_g = ts_g.set_index('Date').groupby('Transaction Type').resample(freq_map[g_freq])['Amount'].agg(g_agg.lower()).reset_index()
         
-        # FIXED: Added unique key
         fig_g = px.line(ts_res_g, x='Date', y='Amount', color='Transaction Type', markers=True, title="Income vs Expenditure Trend")
         st.plotly_chart(fig_g, use_container_width=True, key="line_trend_global_overview")
 
         render_flexible_plots(filt_g, "global_overview")
+        
+        # --- NEW: Global Net Balance Time Series Plot ---
+        if not ts_res_g.empty:
+            st.markdown("#### 📉 Global Net Balance Over Time")
+            net_df_g = ts_res_g.copy()
+            net_df_g['Type'] = net_df_g['Transaction Type'].replace({'Received': 'Income', 'Paid': 'Expenditure'})
+            net_pivot_g = net_df_g.pivot_table(index='Date', columns='Type', values='Amount', aggfunc='sum').fillna(0)
+            for col in ['Income', 'Expenditure']:
+                if col not in net_pivot_g.columns:
+                    net_pivot_g[col] = 0
+            
+            net_pivot_g['Net Balance'] = net_pivot_g['Income'] - net_pivot_g['Expenditure']
+            net_pivot_g = net_pivot_g.reset_index()
+            
+            fig_net_g = px.line(net_pivot_g, x='Date', y='Net Balance', markers=True, title=f"Global Net Balance Trend ({g_freq})")
+            fig_net_g.add_hline(y=0, line_dash="dash", line_color="gray") # Adds a zero-line for reference
+            st.plotly_chart(fig_net_g, use_container_width=True, key="net_bal_plot_global")
+        # ------------------------------------------------
+
         st.dataframe(filt_g.sort_values('Date', ascending=False), use_container_width=True)
 
     # 2. GLOBAL INCOME
@@ -189,10 +223,8 @@ def render_funds_tab(data):
         inc_df = get_clean_data(df[df['Transaction Type'].isin(['Income', 'Received'])])
         filt_inc = apply_dynamic_filters(inc_df, "global_inc")
         
-        # Income Metrics
         st.metric("Total Global Income", f"₹{filt_inc['Amount'].sum():,.2f}")
         
-        # Income Time Series (Split by Domain)
         if not filt_inc.empty:
             tc1, tc2 = st.columns(2)
             with tc1: i_freq = st.selectbox("Frequency", ["Daily", "Weekly", "Monthly", "Quarterly"], key="g_freq_inc")
@@ -202,7 +234,6 @@ def render_funds_tab(data):
             ts_i['Date'] = pd.to_datetime(ts_i['Date'])
             ts_res_i = ts_i.set_index('Date').groupby('Domain').resample(freq_map[i_freq])['Amount'].agg(i_agg.lower()).reset_index()
             
-            # FIXED: Added unique key
             fig_i = px.line(ts_res_i, x='Date', y='Amount', color='Domain', markers=True, title="Income Trend by Domain")
             st.plotly_chart(fig_i, use_container_width=True, key="line_trend_global_inc")
 
@@ -214,10 +245,8 @@ def render_funds_tab(data):
         exp_df = get_clean_data(df[df['Transaction Type'].isin(['Expenditure', 'Paid'])])
         filt_exp = apply_dynamic_filters(exp_df, "global_exp")
         
-        # Expenditure Metrics
         st.metric("Total Global Expenditure", f"₹{filt_exp['Amount'].sum():,.2f}")
         
-        # Expenditure Time Series (Split by Domain)
         if not filt_exp.empty:
             tc1, tc2 = st.columns(2)
             with tc1: e_freq = st.selectbox("Frequency", ["Daily", "Weekly", "Monthly", "Quarterly"], key="g_freq_exp")
@@ -227,7 +256,6 @@ def render_funds_tab(data):
             ts_e['Date'] = pd.to_datetime(ts_e['Date'])
             ts_res_e = ts_e.set_index('Date').groupby('Domain').resample(freq_map[e_freq])['Amount'].agg(e_agg.lower()).reset_index()
             
-            # FIXED: Added unique key
             fig_e = px.line(ts_res_e, x='Date', y='Amount', color='Domain', markers=True, title="Expenditure Trend by Domain")
             st.plotly_chart(fig_e, use_container_width=True, key="line_trend_global_exp")
 
