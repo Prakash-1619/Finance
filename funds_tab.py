@@ -124,7 +124,7 @@ def render_domain_dashboard(domain_name, tab_obj, df_raw, start_date, end_date):
 
             render_flexible_plots(filt_dom, f"bal_{domain_name}")
 
-            # --- CUMULATIVE NET BALANCE (ALL TIME) ---
+            # --- CUMULATIVE NET BALANCE (ALL TIME SMOOTHED AREA) ---
             ts_dom_all = filt_dom_all.copy()
             ts_dom_all['Date'] = pd.to_datetime(ts_dom_all['Date'])
             ts_res_all = ts_dom_all.set_index('Date').groupby('Transaction Type').resample(freq_map[freq])['Amount'].agg(agg.lower()).reset_index()
@@ -143,7 +143,18 @@ def render_domain_dashboard(domain_name, tab_obj, df_raw, start_date, end_date):
                 net_pivot_d['Cumulative Net'] = net_pivot_d['Net Balance'].cumsum()
                 net_pivot_d = net_pivot_d.reset_index()
                 
-                fig_net_d = px.line(net_pivot_d, x='Date', y='Cumulative Net', markers=True, title=f"All-Time Net Flow ({freq})")
+                # Determine color based on current (latest) net value
+                current_net_d = net_pivot_d['Cumulative Net'].iloc[-1] if not net_pivot_d.empty else 0
+                if current_net_d < 0:
+                    area_color_d = '#EF553B' # Red
+                elif current_net_d < 5000:
+                    area_color_d = '#636EFA' # Blue
+                else:
+                    area_color_d = '#00CC96' # Green
+
+                # Smoothed Area Plot
+                fig_net_d = px.area(net_pivot_d, x='Date', y='Cumulative Net', markers=True, title=f"All-Time Net Flow ({freq})", color_discrete_sequence=[area_color_d])
+                fig_net_d.update_traces(line_shape='spline') # This smooths the line and area
                 fig_net_d.add_hline(y=0, line_dash="dash", line_color="gray")
                 st.plotly_chart(fig_net_d, use_container_width=True, key=f"net_bal_plot_{domain_name}")
 
@@ -160,7 +171,8 @@ def render_domain_dashboard(domain_name, tab_obj, df_raw, start_date, end_date):
             st.dataframe(inc_df.sort_values('Date', ascending=False), use_container_width=True)
 
         with d_tabs[3]: # Manage
-            render_delete_interface(domain_df, domain_name)
+            # FIXED ERROR: Using domain_df_all instead of domain_df
+            render_delete_interface(domain_df_all, domain_name) 
 
 def render_funds_tab(data):
     df_raw = load_data()
@@ -214,7 +226,7 @@ def render_funds_tab(data):
 
         render_flexible_plots(filt_g, "global_overview")
         
-        # --- CUMULATIVE GLOBAL NET BALANCE (ALL TIME) ---
+        # --- CUMULATIVE GLOBAL NET BALANCE (ALL TIME SMOOTHED AREA) ---
         ts_g_all = filt_g_all.copy()
         ts_g_all['Date'] = pd.to_datetime(ts_g_all['Date'])
         ts_res_g_all = ts_g_all.set_index('Date').groupby('Transaction Type').resample(freq_map[g_freq])['Amount'].agg(g_agg.lower()).reset_index()
@@ -233,7 +245,18 @@ def render_funds_tab(data):
             net_pivot_g['Cumulative Net'] = net_pivot_g['Net Balance'].cumsum()
             net_pivot_g = net_pivot_g.reset_index()
             
-            fig_net_g = px.line(net_pivot_g, x='Date', y='Cumulative Net', markers=True, title=f"All-Time Global Net Flow ({g_freq})")
+            # Determine color based on current (latest) net value
+            current_net_g = net_pivot_g['Cumulative Net'].iloc[-1] if not net_pivot_g.empty else 0
+            if current_net_g < 0:
+                area_color_g = '#EF553B' # Red
+            elif current_net_g < 5000:
+                area_color_g = '#636EFA' # Blue
+            else:
+                area_color_g = '#00CC96' # Green
+
+            # Smoothed Area Plot
+            fig_net_g = px.area(net_pivot_g, x='Date', y='Cumulative Net', markers=True, title=f"All-Time Global Net Flow ({g_freq})", color_discrete_sequence=[area_color_g])
+            fig_net_g.update_traces(line_shape='spline') # Smooths the graph
             fig_net_g.add_hline(y=0, line_dash="dash", line_color="gray")
             st.plotly_chart(fig_net_g, use_container_width=True, key="net_bal_plot_global")
 
