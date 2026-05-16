@@ -6,3 +6,4 @@ Date,Transaction Type,Payment Status,Amount,Frequency,Payment App,Phone Number,B
 2026-05-16,Expenditure,Completed / Received,1200.0,One-time,,Other,Cash,Poojari kiran,,Car,Diesel,,"{""Shop/Org Name"": ""HP"", ""Current Odometer (KM)"": 91810, ""Price per litre"": 100.56}"
 2026-05-15,Income,Completed / Received,1200.0,One-time,,Other,Cash,Poojari kiran,,Car,,,{}
 2026-05-16,Income,Completed / Received,25000.0,Monthly,PhonePe,9550927050,FI/Federal,Natesh ,Truestates.ai,Salary,,,{}
+2026-05-16,Expenditure,Completed / Received,100.0,One-time,None,Other,Cash,,Temple ,Personal,Gifts/Donations,,{}
