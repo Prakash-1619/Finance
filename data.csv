@@ -1,5 +1,4 @@
 Date,Transaction Type,Payment Status,Amount,Frequency,Payment App,Phone Number,Bank Name,Person/Org Name,Org Name,Domain,Sub-Category,Description,Extra Details
-2026-05-15,Expenditure,Completed / Received,3200.0,One-time,GPay,9550927050,SBI,HP Fuel Station,,Car,Diesel,Full tank refill,"{""Shop/Org Name"": ""HP Bunk"", ""Current Odometer (KM)"": 89550, ""Price per litre"": 98.5}"
 2026-05-15,Expenditure,Completed / Received,300.0,One-time,PhonePe,9550927050,Indian Bank,,,Car,Diesel,,"{""Shop/Org Name"": """", ""Current Odometer (KM)"": 89400, ""Price per litre"": 0.0}"
 2026-05-13,Expenditure,Completed / Received,100.0,One-time,PhonePe,9550927050,Indian Bank,,,Car,Diesel,,"{""Shop/Org Name"": """", ""Current Odometer (KM)"": 89400, ""Price per litre"": 0.0}"
 2026-05-13,Income,Completed / Received,100.0,One-time,PhonePe,9550927050,Indian Bank,,,Car,,,{}
@@ -8,4 +7,4 @@ Date,Transaction Type,Payment Status,Amount,Frequency,Payment App,Phone Number,B
 2026-04-18,Expenditure,Completed / Received,120000.0,One-time,,9550927050,Cash,Srinivasulu B,,Car,Other,,"{""Shop/Org Name"": """"}"
 2026-05-02,Income,Completed / Received,300000.0,One-time,,9550927050,Indian Bank,,Indian Bank,Loans,Gold,,"{""Interest Type"": ""Flat Rate"", ""Interest Rate/Amt"": """", ""Tenure (Months)"": 1, ""Projected End Date"": ""2026-05-15""}"
 2026-05-16,Expenditure,Completed / Received,1200.0,One-time,,Other,Cash,Poojari kiran,,Car,Diesel,,"{""Shop/Org Name"": ""HP"", ""Current Odometer (KM)"": 91810, ""Price per litre"": 100.56}"
-2026-05-15,Income,Completed / Received,1200.0,One-time,None,Other,Cash,Poojari kiran,,Car,,,{}
+2026-05-15,Income,Completed / Received,1200.0,One-time,,Other,Cash,Poojari kiran,,Car,,,{}
