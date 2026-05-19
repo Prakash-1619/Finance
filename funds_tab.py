@@ -109,12 +109,14 @@ def render_domain_dashboard(domain_name, tab_obj, df_raw, start_date, end_date):
             with c1: freq = st.selectbox("Frequency", ["Daily", "Weekly", "Monthly", "Quarterly"], key=f"f_{domain_name}")
             with c2: agg = st.selectbox("Metric", ["Sum", "Mean"], key=f"a_{domain_name}")
             
+            #ts_df = filt_dom.copy()
             ts_df = filt_dom.copy()
+            freq_map = {"Daily": "D", "Weekly": "W", "Monthly": "ME", "Quarterly": "QE"} # Moved outside!
+            
             if not ts_df.empty:
                 ts_df['Date'] = pd.to_datetime(ts_df['Date'])
-                freq_map = {"Daily": "D", "Weekly": "W", "Monthly": "ME", "Quarterly": "QE"}
                 ts_res = ts_df.set_index('Date').groupby('Transaction Type').resample(freq_map[freq])['Amount'].agg(agg.lower()).reset_index()
-                
+                            
                 # Optional safety net just in case Pandas still renames it to 0
                 if 'Amount' not in ts_res.columns and 0 in ts_res.columns:
                     ts_res = ts_res.rename(columns={0: 'Amount'})
@@ -242,12 +244,13 @@ def render_funds_tab(data):
         with tc1: g_freq = st.selectbox("Frequency", ["Daily", "Weekly", "Monthly", "Quarterly"], key="g_freq_overview")
         with tc2: g_agg = st.selectbox("Metric", ["Sum", "Mean"], key="g_agg_overview")
         
+        #ts_g = filt_g.copy()
         ts_g = filt_g.copy()
+        freq_map = {"Daily": "D", "Weekly": "W", "Monthly": "ME", "Quarterly": "QE"} # Moved outside!
+        
         if not ts_g.empty:
             ts_g['Date'] = pd.to_datetime(ts_g['Date'])
-            freq_map = {"Daily": "D", "Weekly": "W", "Monthly": "ME", "Quarterly": "QE"}
             ts_res_g = ts_g.set_index('Date').groupby('Transaction Type').resample(freq_map[g_freq])['Amount'].agg(g_agg.lower()).reset_index()
-            
             if 'Amount' not in ts_res_g.columns and 0 in ts_res_g.columns:
                 ts_res_g = ts_res_g.rename(columns={0: 'Amount'})
         
