@@ -103,10 +103,12 @@ def render_form_tab():
             extra["Crop/Season"] = st.text_input("Crop Cycle or Season (e.g., Kharif Corn)")
             if sub_category in ["Fertilizers", "Pesticide", "Seeds/Plants", "Fodder"]: extra["Quantity & Unit"] = st.text_input("Quantity (e.g., 5 Bags, 10 Liters)")
         elif domain == "Personal" and trans_type != "Income":
-            sub_category = st.selectbox("Personal Category", ["Food", "Fashion", "Health/Medical", "Subscriptions", "Education", "Gifts/Donations"])
+            sub_category = st.selectbox("Personal Category", ["Food", "Fashion", "Health/Medical", "Subscriptions", "Education", "Gifts/Donations", "Recharge"])
+            if sub_category in ["Recharge"]: extra["Mobile Number"] = st.text_input("Enter mobile number")
         elif domain == "Home" and trans_type != "Received":
-            sub_category = st.selectbox("Home Category", ["Household", "Parents", "Occasion/Event", "Appliance/Asset", "Repair"])
+            sub_category = st.selectbox("Home Category", ["Household", "Parents", "Occasion/Event", "Appliance/Asset", "Repair","Electricity", "Recharge"])
             if sub_category in ["Appliance/Asset", "Repair"]: extra["Asset Name"] = st.text_input("Specific Asset (e.g., Washing Machine, Roof)")
+            if sub_category in ["Recharge"]: extra["Mobile Number"] = st.text_input("Enter mobile number")
         elif domain == "Friends lending" and trans_type != "Income":
             sub_category = st.selectbox("Lending Detail", ["Lending Out", "Helping", "Other"])
             if sub_category != "Helping":
