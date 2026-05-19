@@ -10,3 +10,4 @@ Date,Transaction Type,Payment Status,Amount,Frequency,Payment App,Phone Number,B
 2026-05-16,Expenditure,Completed / Received,170.0,One-time,,Other,Cash,,Temple ,Personal,Gifts/Donations,Dothi ,{}
 2026-05-19,Expenditure,Completed / Received,1100.0,One-time,BHIM,9550927050,Indian Bank,,HP,Car,Diesel,,"{""Shop/Org Name"": """", ""Current Odometer (KM)"": 92280, ""Price per litre"": 101.51}"
 2026-05-17,Expenditure,Completed / Received,7400.0,One-time,Super Money,9550927050,FI/Federal,Divakar,,Agri Land,Irrigation,,"{""Plot"": ""2"", ""Crop"": ""Fodder"", ""Crop/Season"": """"}"
+2026-05-17,Expenditure,Completed / Received,299.0,Monthly,BHIM,9550927050,FI/Federal,Papulamma,,Home,Recharge,,"{""Mobile Number"": ""9550580159""}"
