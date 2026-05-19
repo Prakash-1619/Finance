@@ -26,7 +26,7 @@ def render_form_tab():
             
         with col3:
             st.markdown("**Payment Route**")
-            pay_app = st.selectbox("App/Method", ["BHIM", 'Slice","PhonePe", "Paytm", "GPay", "Super Money", "None"])
+            pay_app = st.selectbox("App/Method", ["PhonePe", "Paytm", "GPay", "Super Money", "None"])
             bank_name = st.selectbox("Bank", ["Indian Bank", "SBI", "FI/Federal", "AXIS", "Cash"])
             phone_num = st.selectbox("Number Used", ["9550927050", "7702486243", "Other"])
 
@@ -144,7 +144,7 @@ def render_form_tab():
             else:
                 with st.spinner("Syncing to GitHub..."):
                     new_data = pd.DataFrame([{
-                        "Date": entry_date, "Transaction Type": trans_type, #"Currency": currency,
+                        "Date": entry_date, "Transaction Type": trans_type, "Currency": currency,
                         "Payment Status": payment_status, "Amount": amount, "Frequency": frequency,
                         "Payment App": pay_app, "Phone Number": phone_num, "Bank Name": bank_name,
                         "Person/Org Name": person_org, "Org Name": org_name, "Domain": domain, "Sub-Category": sub_category,
