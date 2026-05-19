@@ -26,7 +26,7 @@ def render_form_tab():
             
         with col3:
             st.markdown("**Payment Route**")
-            pay_app = st.selectbox("App/Method", ["PhonePe", "Paytm", "GPay", "Super Money", "None"])
+            pay_app = st.selectbox("App/Method", ["BHIM", "PhonePe", "Paytm", "GPay", "Super Money","Slice", "None"])
             bank_name = st.selectbox("Bank", ["Indian Bank", "SBI", "FI/Federal", "AXIS", "Cash"])
             phone_num = st.selectbox("Number Used", ["9550927050", "7702486243", "Other"])
 
