@@ -18,8 +18,9 @@ st.markdown("Dynamic cross-filtering dashboard with real-time aggregation.")
 def load_and_prepare_data(file_path):
     # 1. Load Data
     # Replace this with your actual combined merged dataset path
+    parquet_path = "combined_df_2020.parquet"
     df = pd.read_parquet(parquet_path)
-    parquet_path = "processed_market_data.parquet"
+    
     # 2. Market Mappings
     market_mappings = {
         'direct_areas': [
@@ -75,7 +76,8 @@ def load_and_prepare_data(file_path):
     # SAVE AS PARQUET (As Requested)
     # ---------------------------------------------------------
     #parquet_path = "processed_market_data.parquet"
-    df.to_parquet(parquet_path, index=False)
+    parquet_path_fil = "processed_market_data.parquet"
+    df.to_parquet(parquet_path_fil, index=False)
     
     return df
 
