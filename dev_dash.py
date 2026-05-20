@@ -267,33 +267,56 @@ with tab2:
 
 
 # --- TAB 3: DATA TABLE ---
-with tab3:
-    st.subheader("Granular Data View")
-    
-    table_agg = filtered_df.groupby([
-        'developer_name_en', 'market_segment', 'project_name_en', 
-        'reg_type_en', 'rooms_en', 'month_year'
-    ]).agg(
-        median_price=('meter_sale_price', 'median'),
-        transaction_count=('transaction_id', 'count')
-    ).reset_index().sort_values(by='transaction_count', ascending=False)
-    
-    # Apply styling natively using Streamlit column_config
-    st.dataframe(
-        table_agg,
-        width="stretch",
-        height=600,
-        column_config={
-            "median_price": st.column_config.NumberColumn(
-                "Median Price", 
-                format="AED %.2f"
-            ),
-            "transaction_count": st.column_config.NumberColumn(
-                "Transaction Count", 
-                format="%d"
-            )
+# --- TAB 3: DATA TABLE ---
+    with tab3:
+        st.subheader("Granular Data View")
+        
+        # 1. Create a dictionary to map readable names to your raw column names
+        group_options = {
+            "Developer": "developer_name_en",
+            "Market Segment": "market_segment",
+            "Project": "project_name_en", 
+            "Reg Type": "reg_type_en",
+            "Room Type": "rooms_en",
+            "Month-Year": "month_year"
         }
-    )
+        
+        # 2. Create a dynamic multiselect specifically for grouping the table
+        selected_groups = st.multiselect(
+            "Select Columns to Group By:",
+            options=list(group_options.keys()),
+            default=["Project", "Room Type"] # Starts with these selected by default
+        )
+        
+        # 3. Only calculate and show the table if at least one column is selected
+        if not selected_groups:
+            st.info("👆 Please select at least one column above to generate the table.")
+        else:
+            # Get the actual database column names based on the user's selection
+            groupby_cols = [group_options[name] for name in selected_groups]
+            
+            # 4. Group dynamically using the selected columns!
+            table_agg = filtered_df.groupby(groupby_cols).agg(
+                median_price=('meter_sale_price', 'median'),
+                transaction_count=('transaction_id', 'count')
+            ).reset_index().sort_values(by='transaction_count', ascending=False)
+            
+            # 5. Render the table
+            st.dataframe(
+                table_agg, 
+                width="stretch", 
+                height=600,
+                column_config={
+                    "median_price": st.column_config.NumberColumn(
+                        "Median Price", 
+                        format="AED %.2f"
+                    ),
+                    "transaction_count": st.column_config.NumberColumn(
+                        "Transaction Count", 
+                        format="%d"
+                    )
+                }
+            )
 # --- TAB 4: NEW EXTRA FEATURE (DEVELOPER MATRIX) ---
 with tab4:
     st.subheader("⭐ Strategic Developer Matrix")
