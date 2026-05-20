@@ -143,7 +143,7 @@ st.sidebar.header("🎯 Dynamic Filters")
 # This is where your radio button must be to control the view
 view_mode = st.sidebar.radio(
     "📍 Segment View Mode",
-    ["All Segments", "Direct Areas Only", "Proxies Only"]
+    ["All Segments", "Direct Areas Only", "Proxies Only"])
 
 
 # We apply filters step-by-step to cascade the available options
