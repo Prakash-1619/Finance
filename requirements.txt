@@ -9,3 +9,4 @@ plotly==5.19.0
 PyGithub==2.2.0
 #zlib1g-dev
 #libjpeg-dev
+websockets<14.0
