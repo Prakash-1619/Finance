@@ -323,13 +323,19 @@ with tab4:
     st.subheader("⭐ Strategic Developer Matrix")
     st.markdown("Analyze developers by identifying who pushes high **volumes**, who commands **premium prices**, and the **scale** of their project unit launches.")
     
-    matrix_agg = filtered_df.groupby('developer_name_en').agg(
+    # 1. Calculate transactions and price (dropping duplicate transaction IDs)
+    matrix_agg = filtered_df.drop_duplicates(subset=['transaction_id']).groupby('developer_name_en').agg(
         median_price=('meter_sale_price', 'median'),
-        total_transactions=('transaction_id', 'count'),
-        # Get unique units per project so it doesn't inflate
-        total_units_launched=('no_of_units', lambda x: filtered_df.loc[x.index].drop_duplicates('project_number')['no_of_units'].sum())
+        total_transactions=('transaction_id', 'count')
     ).reset_index()
-    
+
+    # 2. Calculate total units separately (dropping duplicate project numbers)
+    units_agg = filtered_df.drop_duplicates(subset=['project_number']).groupby('developer_name_en')['no_of_units'].sum().reset_index()
+    units_agg.rename(columns={'no_of_units': 'total_units_launched'}, inplace=True)
+
+    # 3. Merge them together to build the matrix!
+    matrix_agg = matrix_agg.merge(units_agg, on='developer_name_en')
+
     # Filter out small data for a cleaner chart
     matrix_agg = matrix_agg[matrix_agg['total_transactions'] > 5]
     
