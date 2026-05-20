@@ -141,6 +141,17 @@ sorted_months = sorted(filtered_df['month_year'].dropna().unique(), key=lambda x
 months = st.sidebar.multiselect("Month-Year", sorted_months)
 if months: filtered_df = filtered_df[filtered_df['month_year'].isin(months)]
 
+# Filter 6: Transaction Type (Conditional)
+if 'trans_type_en' in filtered_df.columns:
+    trans_types = st.sidebar.multiselect("Transaction Type", sorted(filtered_df['trans_type_en'].dropna().unique()))
+    if trans_types:
+        filtered_df = filtered_df[filtered_df['trans_type_en'].isin(trans_types)]
+
+# Filter 7: Procedure Name (Conditional)
+if 'procedure_name_en' in filtered_df.columns:
+    procedures = st.sidebar.multiselect("Procedure Name", sorted(filtered_df['procedure_name_en'].dropna().unique()))
+    if procedures:
+        filtered_df = filtered_df[filtered_df['procedure_name_en'].isin(procedures)]
 
 # ---------------------------------------------------------
 # 4. KPI METRICS
@@ -168,12 +179,13 @@ st.markdown("---")
 # ---------------------------------------------------------
 # 5. DASHBOARD TABS
 # ---------------------------------------------------------
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
         "📈 Market Overview", 
         "🏢 Project Deep Dive", 
         "📊 Data Table", 
         "⭐ Developer Matrix (New!)",
-        "👯 Duplicate Analysis" # <--- ADD THIS 5TH TAB HERE
+        "👯 Duplicate Analysis",
+        "📋 Procedures & Types" # <--- ADD TAB 6 HERE
     ])
 
 # --- TAB 1: MARKET OVERVIEW ---
@@ -444,3 +456,49 @@ with tab4:
                 )
                 fig_dup_time.update_layout(margin=dict(l=0, r=0, t=10, b=0))
                 st.plotly_chart(fig_dup_time, width="stretch")
+# --- TAB 6: PROCEDURES & TYPES ---
+    with tab6:
+        st.subheader("📋 Transaction Types & Procedures")
+        st.markdown("Breakdown of real estate activities by primary transaction type and specific procedure classifications.")
+        
+        col_t1, col_t2 = st.columns(2)
+        
+        with col_t1:
+            if 'trans_type_en' in filtered_df.columns:
+                st.markdown("**Volume by Transaction Type**")
+                trans_agg = filtered_df['trans_type_en'].value_counts().reset_index()
+                trans_agg.columns = ['Transaction Type', 'Count']
+                
+                fig_trans = px.pie(
+                    trans_agg, 
+                    names='Transaction Type', 
+                    values='Count',
+                    hole=0.4, # Makes it a donut chart
+                    color_discrete_sequence=px.colors.qualitative.Pastel
+                )
+                fig_trans.update_layout(margin=dict(l=0, r=0, t=10, b=0))
+                st.plotly_chart(fig_trans, width="stretch")
+            else:
+                st.info("ℹ️ The column 'trans_type_en' is not present in the current dataset.")
+                
+        with col_t2:
+            if 'procedure_name_en' in filtered_df.columns:
+                st.markdown("**Top 10 Procedures by Volume**")
+                proc_agg = filtered_df['procedure_name_en'].value_counts().nlargest(10).reset_index()
+                proc_agg.columns = ['Procedure Name', 'Count']
+                
+                fig_proc = px.bar(
+                    proc_agg,
+                    x='Count',
+                    y='Procedure Name',
+                    orientation='h',
+                    color='Procedure Name'
+                )
+                fig_proc.update_layout(
+                    showlegend=False, 
+                    margin=dict(l=0, r=0, t=10, b=0), 
+                    yaxis={'categoryorder':'total ascending'}
+                )
+                st.plotly_chart(fig_proc, width="stretch")
+            else:
+                st.info("ℹ️ The column 'procedure_name_en' is not present in the current dataset.")
