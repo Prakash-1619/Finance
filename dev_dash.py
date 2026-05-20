@@ -94,8 +94,8 @@ def load_and_prepare_data(file_path):
     # SAVE AS PARQUET (As Requested)
     # ---------------------------------------------------------
     #parquet_path = "processed_market_data.parquet"
-    parquet_path_fil = "processed_market_data.parquet"
-    df.to_parquet(parquet_path_fil, index=False)
+    #parquet_path_fil = "processed_market_data.parquet"
+    #df.to_parquet(parquet_path_fil, index=False)
     
     return df
 
@@ -114,7 +114,7 @@ except Exception as e:
 st.sidebar.header("🎯 Dynamic Filters")
 
 # We apply filters step-by-step to cascade the available options
-filtered_df = df_main.copy()
+filtered_df = df_main #.copy()
 
 # Filter 1: Developer
 devs = st.sidebar.multiselect("Developer", sorted(filtered_df['developer_name_en'].unique()))
