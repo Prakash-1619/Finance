@@ -24,7 +24,7 @@ def load_and_prepare_data(file_path):
         'area_name_en', 'developer_name_en', 'meter_sale_price', 
         'instance_date', 'project_start_date', 'no_of_units', 
         'transaction_id', 'project_name_en', 'project_number',
-        'trans_group_en', 'procedure_name_en'
+        'trans_type_en', 'procedure_name_en'
     ]
     
     df = pd.read_parquet(parquet_path, columns=required_cols)
