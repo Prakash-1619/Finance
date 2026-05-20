@@ -44,7 +44,7 @@ def load_and_prepare_data(file_path):
         }
     }
     
-    #proxy_map = {area: group for group, areas in market_mappings['proxies'].items() for area in areas}
+    proxy_map = {area: group for group, areas in market_mappings['proxies'].items() for area in areas}
     if area in proxy_map:
         return proxy_map[area]
     if area in market_mappings['direct_areas']:
