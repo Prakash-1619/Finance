@@ -44,11 +44,9 @@ def load_and_prepare_data(file_path):
         }
     }
     
+    # Ensure this line is UNCOMMENTED (no # at the start) so the dictionary is created!
     proxy_map = {area: group for group, areas in market_mappings['proxies'].items() for area in areas}
-    if area in proxy_map:
-        return proxy_map[area]
-    if area in market_mappings['direct_areas']:
-        return area
+
     # 1. Update the mapping function to collect ALL matches in a list
     def map_segments(area):
         segments = []
@@ -66,11 +64,11 @@ def load_and_prepare_data(file_path):
             return ['Other']
             
         return segments
-    
+
     # 2. Apply the function and use .explode() to split the lists into separate rows
     df['market_segment'] = df['area_name_en'].apply(map_segments)
     df = df.explode('market_segment')
-    
+
     # 3. Drop 'Other' as usual
     df = df[df['market_segment'] != 'Other'].copy()
 
