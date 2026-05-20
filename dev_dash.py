@@ -142,10 +142,10 @@ months = st.sidebar.multiselect("Month-Year", sorted_months)
 if months: filtered_df = filtered_df[filtered_df['month_year'].isin(months)]
 
 # Filter 6: Transaction Type (Conditional)
-if 'trans_type_en' in filtered_df.columns:
-    trans_types = st.sidebar.multiselect("Transaction Type", sorted(filtered_df['trans_type_en'].dropna().unique()))
+if 'trans_group_en' in filtered_df.columns:
+    trans_types = st.sidebar.multiselect("Transaction Type", sorted(filtered_df['trans_group_en'].dropna().unique()))
     if trans_types:
-        filtered_df = filtered_df[filtered_df['trans_type_en'].isin(trans_types)]
+        filtered_df = filtered_df[filtered_df['trans_group_en'].isin(trans_types)]
 
 # Filter 7: Procedure Name (Conditional)
 if 'procedure_name_en' in filtered_df.columns:
@@ -466,7 +466,7 @@ with tab4:
         with col_t1:
             if 'trans_type_en' in filtered_df.columns:
                 st.markdown("**Volume by Transaction Type**")
-                trans_agg = filtered_df['trans_type_en'].value_counts().reset_index()
+                trans_agg = filtered_df['trans_group_en'].value_counts().reset_index()
                 trans_agg.columns = ['Transaction Type', 'Count']
                 
                 fig_trans = px.pie(
