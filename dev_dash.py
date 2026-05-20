@@ -258,16 +258,22 @@ with tab3:
         transaction_count=('transaction_id', 'count')
     ).reset_index().sort_values(by='transaction_count', ascending=False)
     
-    # Apply styling to dataframe
+    # Apply styling natively using Streamlit column_config
     st.dataframe(
-        table_agg.style.format({
-            "median_price": "AED {:,.2f}",
-            "transaction_count": "{:,}"
-        }), 
-        use_container_width=True, 
-        height=600
+        table_agg,
+        use_container_width=True,
+        height=600,
+        column_config={
+            "median_price": st.column_config.NumberColumn(
+                "Median Price", 
+                format="AED %.2f"
+            ),
+            "transaction_count": st.column_config.NumberColumn(
+                "Transaction Count", 
+                format="%d"
+            )
+        }
     )
-
 # --- TAB 4: NEW EXTRA FEATURE (DEVELOPER MATRIX) ---
 with tab4:
     st.subheader("⭐ Strategic Developer Matrix")
