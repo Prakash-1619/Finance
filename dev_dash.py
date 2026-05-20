@@ -168,12 +168,13 @@ st.markdown("---")
 # ---------------------------------------------------------
 # 5. DASHBOARD TABS
 # ---------------------------------------------------------
-tab1, tab2, tab3, tab4 = st.tabs([
-    "📈 Market Overview", 
-    "🏢 Project Deep Dive", 
-    "📊 Data Table",
-    "⭐ Developer Matrix (New!)"
-])
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
+        "📈 Market Overview", 
+        "🏢 Project Deep Dive", 
+        "📊 Data Table", 
+        "⭐ Developer Matrix (New!)",
+        "👯 Duplicate Analysis" # <--- ADD THIS 5TH TAB HERE
+    ])
 
 # --- TAB 1: MARKET OVERVIEW ---
 with tab1:
@@ -356,3 +357,84 @@ with tab4:
     
     fig_matrix.update_layout(height=600, showlegend=False, margin=dict(l=0, r=0, t=30, b=0))
     st.plotly_chart(fig_matrix, width="stretch")
+
+
+# --- TAB 5: DUPLICATE ANALYSIS ---
+    with tab5:
+        st.subheader("👯 Duplicated Transactions Analysis")
+        st.markdown("This tab isolates transactions that appear multiple times (due to mapping to both a Direct Area and a Proxy Group) to help audit the overlap.")
+
+        # 1. Isolate the duplicated transactions using transaction_id
+        # keep=False ensures we keep ALL copies of the duplicate (the original and the clone)
+        dup_mask = filtered_df.duplicated(subset=['transaction_id'], keep=False)
+        dup_df = filtered_df[dup_mask].sort_values(by='transaction_id').copy()
+
+        if dup_df.empty:
+            st.success("No duplicated transactions found in the current filtered dataset! 🎉")
+        else:
+            unique_dup_count = dup_df['transaction_id'].nunique()
+            st.info(f"**Found {unique_dup_count:,} unique transactions** that were duplicated, resulting in {len(dup_df):,} total rows.")
+
+            # 2. Dynamic Table for Duplicates
+            st.markdown("### 🔍 Raw Duplicate Viewer")
+            st.markdown("Sort by `transaction_id` to see exactly how and why a transaction was split into multiple segments.")
+            
+            # Set up columns to select
+            available_cols = list(dup_df.columns)
+            default_cols = ['transaction_id', 'market_segment', 'area_name_en', 'project_name_en', 'meter_sale_price']
+            
+            selected_dup_cols = st.multiselect(
+                "Select columns to view for the duplicates:", 
+                options=available_cols,
+                default=[col for col in default_cols if col in available_cols],
+                key="dup_table_cols" # Unique key so it doesn't conflict with Tab 3
+            )
+            
+            if selected_dup_cols:
+                # Force transaction_id to always be the first column for clarity
+                if 'transaction_id' not in selected_dup_cols:
+                    selected_dup_cols.insert(0, 'transaction_id')
+                
+                st.dataframe(
+                    dup_df[selected_dup_cols],
+                    width="stretch",
+                    height=400,
+                    hide_index=True
+                )
+            
+            # 3. Visualizations to explain the duplicates
+            st.markdown("### 📊 Duplicate Overlap Analytics")
+            colX, colY = st.columns(2)
+            
+            with colX:
+                st.markdown("**Which Market Segments share the most duplicates?**")
+                # Count how many times each segment appears in the duplicates list
+                seg_counts = dup_df['market_segment'].value_counts().reset_index()
+                seg_counts.columns = ['Market Segment', 'Row Count']
+                
+                fig_dup_seg = px.bar(
+                    seg_counts.head(15), 
+                    x='Row Count', 
+                    y='Market Segment',
+                    orientation='h',
+                    color='Market Segment'
+                )
+                fig_dup_seg.update_layout(showlegend=False, margin=dict(l=0, r=0, t=10, b=0), yaxis={'categoryorder':'total ascending'})
+                st.plotly_chart(fig_dup_seg, width="stretch")
+                
+            with colY:
+                st.markdown("**Duplicate Transaction Volume over Time**")
+                # Count unique duplicated transactions per month
+                time_counts = dup_df.groupby('month_year')['transaction_id'].nunique().reset_index()
+                time_counts['sort_date'] = pd.to_datetime(time_counts['month_year'], format='%b-%Y')
+                time_counts = time_counts.sort_values('sort_date')
+                
+                fig_dup_time = px.bar(
+                    time_counts,
+                    x='month_year',
+                    y='transaction_id',
+                    labels={'transaction_id': 'Unique Duplicated Transactions', 'month_year': 'Month'},
+                    color_discrete_sequence=['#ef4444'] # Red to indicate duplicates
+                )
+                fig_dup_time.update_layout(margin=dict(l=0, r=0, t=10, b=0))
+                st.plotly_chart(fig_dup_time, width="stretch")
