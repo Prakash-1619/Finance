@@ -265,7 +265,7 @@ with tab2:
         dur_df = filtered_df.drop_duplicates(subset=['project_name_en']).nlargest(15, 'start_to_trans_days')
         fig_dur = px.bar(dur_df, x='start_to_trans_days', y='project_name_en', orientation='h', color_discrete_sequence=['#8b5cf6'])
         fig_dur.update_layout(height=400, margin=dict(l=0, r=0, t=30, b=0), yaxis={'categoryorder':'total ascending'})
-        st.plotly_chart(fig_dur, use_container_width=True)
+        st.plotly_chart(fig_dur, width="stretch")
 
     st.subheader("Room-wise Price Trend")
     room_agg = filtered_df.groupby(['month_year', 'rooms_en']).agg(
