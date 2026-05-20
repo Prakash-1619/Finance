@@ -279,6 +279,68 @@ with tab2:
     st.plotly_chart(fig_room,width="stretch")
 
 
+    # --- NEW PROJECT TIMELINE & VOLUME SECTION ---
+    st.markdown("---")
+    st.subheader("📅 Project Timeline & Volume Analysis")
+    
+    # 1. Prepare Aggregated Data for Plots
+    ts_agg = filtered_df.groupby(['month_year', 'project_name_en']).agg(
+        median_price=('meter_sale_price', 'median'),
+        trans_count=('transaction_id', 'count')
+    ).reset_index()
+    
+    # Sort properly by time
+    ts_agg['sort_date'] = pd.to_datetime(ts_agg['month_year'], format='%b-%Y')
+    ts_agg = ts_agg.sort_values('sort_date')
+    
+    col_ts1, col_ts2 = st.columns(2)
+    
+    with col_ts1:
+        st.markdown("**Project Price Trend (Time Series)**")
+        fig_ts = px.line(
+            ts_agg, x='month_year', y='median_price', color='project_name_en', 
+            markers=True, labels={'month_year': 'Month', 'median_price': 'Median Price', 'project_name_en': 'Project Name'}
+        )
+        fig_ts.update_layout(margin=dict(l=0, r=0, t=10, b=0), hovermode="x unified")
+        st.plotly_chart(fig_ts, width="stretch")
+        
+    with col_ts2:
+        st.markdown("**Transaction Volume (Stacked)**")
+        fig_stack = px.bar(
+            ts_agg, x='month_year', y='trans_count', color='project_name_en',
+            labels={'month_year': 'Month', 'trans_count': 'Count', 'project_name_en': 'Project Name'}
+        )
+        fig_stack.update_layout(margin=dict(l=0, r=0, t=10, b=0), barmode='stack')
+        st.plotly_chart(fig_stack, width="stretch")
+    
+    # 2. Granular Project Data Table
+    st.markdown("**📋 Project Start Dates & Core Metrics**")
+    
+    # Grouping to get the start date alongside metrics
+    proj_table = filtered_df.groupby('project_name_en').agg(
+        start_date=('project_start_date', 'min'), # Grabs the earliest date recorded for the project
+        total_trans=('transaction_id', 'count'),
+        median_price=('meter_sale_price', 'median')
+    ).reset_index()
+    
+    # Format the datetime into a clean string (e.g., "15 Jan 2020")
+    proj_table['start_date'] = proj_table['start_date'].dt.strftime('%d %b %Y').fillna("Unknown")
+    proj_table = proj_table.sort_values('total_trans', ascending=False)
+    
+    st.dataframe(
+        proj_table, 
+        width="stretch",
+        hide_index=True,
+        column_config={
+            "project_name_en": "Project Name",
+            "start_date": "Project Start Date",
+            "total_trans": st.column_config.NumberColumn("Total Transactions", format="%d"),
+            "median_price": st.column_config.NumberColumn("Median Price (AED/Sqm)", format="AED %.2f")
+        }
+    )
+    
+
+
 # --- TAB 3: DATA TABLE ---
 # --- TAB 3: DATA TABLE ---
     with tab3:
