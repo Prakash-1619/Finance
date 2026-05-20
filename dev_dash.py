@@ -217,8 +217,10 @@ with tab1:
     with colA:
         st.subheader("Segment Performance Heatmap")
         # Ensure correct sorting
-        filtered_df['sort_date'] = pd.to_datetime(filtered_df['month_year'], format='%b-%Y')
-        sorted_df = filtered_df.sort_values('sort_date')
+        #filtered_df['sort_date'] = pd.to_datetime(filtered_df['month_year'], format='%b-%Y')
+        #sorted_df = filtered_df.sort_values('sort_date')
+        # Sort using the existing datetime column to save RAM!
+        sorted_df = filtered_df.sort_values('instance_date')
         
         fig_heat = px.density_heatmap(
                     sorted_df, 
