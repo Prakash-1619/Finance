@@ -16,62 +16,121 @@ st.markdown("Dynamic cross-filtering dashboard with real-time aggregation.")
 # ---------------------------------------------------------
 @st.cache_data
 def load_and_prepare_data(file_path):
-    # 1. Load Data (Only required columns)
+    # 1. Load Data (Only the columns you need for the charts/filters!)
+    parquet_path = "combined_df_2020.parquet"
+    
+    # Identify exactly which columns you use in your app to speed this up
     required_cols = [
         'area_name_en', 'developer_name_en', 'meter_sale_price', 
         'instance_date', 'project_start_date', 'no_of_units', 
         'transaction_id', 'project_name_en', 'project_number',
         'trans_group_en', 'procedure_name_en'
     ]
-    df = pd.read_parquet(file_path, columns=required_cols)
     
+    df = pd.read_parquet(parquet_path, columns=required_cols)
+    # 1. Load the data
+
     # 2. Market Mappings
     market_mappings = {
-        'direct_areas': ["Al Barsha South Fourth", "Business Bay", "Al Merkadh", "Burj Khalifa", "Hadaeq Sheikh Mohammed Bin Rashid", "Al Khairan First", "Wadi Al Safa 5", "Al Thanyah Fifth", "Al Barshaa South Third", "Jabal Ali First", "Madinat Al Mataar", "Madinat Dubai Almelaheyah", "Me'Aisem First", "Al Hebiah Fourth", "Al Barsha South Fifth", "Al Hebiah First", "Nadd Hessa", "Palm Jumeirah", "Al Barshaa South Second", "Al Yelayiss 2", "Al Warsan First", "Marsa Dubai"],
+        'direct_areas': [
+            "Al Barsha South Fourth", "Business Bay", "Al Merkadh", "Burj Khalifa",
+            "Hadaeq Sheikh Mohammed Bin Rashid", "Al Khairan First", "Wadi Al Safa 5",
+            "Al Thanyah Fifth", "Al Barshaa South Third", "Jabal Ali First",
+            "Madinat Al Mataar", "Madinat Dubai Almelaheyah", "Me'Aisem First",
+            "Al Hebiah Fourth", "Al Barsha South Fifth", "Al Hebiah First",
+            "Nadd Hessa", "Palm Jumeirah", "Al Barshaa South Second",
+            "Al Yelayiss 2", "Al Warsan First", "Marsa Dubai"
+        ],
         'proxies': {
-            'G1': ['Wadi Al Safa 4', 'Al Kifaf'], 'G2': ['Dubai Investment Park First', 'Wadi Al Safa 7'],
-            'G3': ['Warsan Fourth', 'Jabal Ali'], 'G4': ['Zaabeel Second', 'Zaabeel First'],
-            'G5': ['Saih Shuaib 2', 'Nad Al Shiba First'], 'Proxy1': ['Al Barsha South Fourth', 'Al Barshaa South Third', 'Al Yelayiss 2'],
-            'Proxy2': ['Bukadra', 'Madinat Dubai Almelaheyah'], 'Proxy3': ['Jabal Ali First', "Me'Aisem First"]
+            'G1': ['Wadi Al Safa 4', 'Al Kifaf'],
+            'G2': ['Dubai Investment Park First', 'Wadi Al Safa 7'],
+            'G3': ['Warsan Fourth', 'Jabal Ali'],
+            'G4': ['Zaabeel Second', 'Zaabeel First'],
+            'G5': ['Saih Shuaib 2', 'Nad Al Shiba First'],
+            'Proxy1': ['Al Barsha South Fourth', 'Al Barshaa South Third', 'Al Yelayiss 2'],
+            'Proxy2': ['Bukadra', 'Madinat Dubai Almelaheyah'],
+            'Proxy3': ['Jabal Ali First', "Me'Aisem First"]
         }
     }
+    #df = load_and_prepare_data("combined_df_2020.parquet")
     
+    # 2. PERFORM FILTERING HERE (Before plotting/grouping)
+    proxy_names = ['G1', 'G2', 'G3', 'G4', 'G5', 'Proxy1', 'Proxy2', 'Proxy3']
+    
+    if view_mode == "Direct Areas Only":
+        # Keep only records where market_segment is NOT a proxy
+        filtered_df = df[~df['market_segment'].isin(proxy_names)].copy()
+    elif view_mode == "Proxies Only":
+        # Keep only records where market_segment IS a proxy
+        filtered_df = df[df['market_segment'].isin(proxy_names)].copy()
+    else:
+        # "All Segments"
+        filtered_df = df.copy()
+    
+    # Now proceed to plot using filtered_df...
+    # Ensure this line is UNCOMMENTED (no # at the start) so the dictionary is created!
     proxy_map = {area: group for group, areas in market_mappings['proxies'].items() for area in areas}
 
+    # 1. Update the mapping function to collect ALL matches in a list
     def map_segments(area):
         segments = []
-        if area in market_mappings['direct_areas']: segments.append(area)
-        if area in proxy_map: segments.append(proxy_map[area])
-        if len(segments) == 0: return ['Other']
+        
+        # Add as a direct area if it's in the list
+        if area in market_mappings['direct_areas']:
+            segments.append(area)
+            
+        # Also add as a proxy group if it belongs to one
+        if area in proxy_map:
+            segments.append(proxy_map[area])
+            
+        # If it matched neither, label it 'Other'
+        if len(segments) == 0:
+            return ['Other']
+            
         return segments
 
-    # 3. Process
+    # 2. Apply the function and use .explode() to split the lists into separate rows
     df['market_segment'] = df['area_name_en'].apply(map_segments)
     df = df.explode('market_segment')
-    df = df[df['market_segment'] != 'Other']
-    
-    # Format Dates
+
+    # 3. Drop 'Other' as usual
+    df = df[df['market_segment'] != 'Other']#.copy()
+
+    # 3. Format Dates & Durations
     df['instance_date'] = pd.to_datetime(df['instance_date'], errors='coerce')
     df['project_start_date'] = pd.to_datetime(df['project_start_date'], errors='coerce')
     df['month_year'] = df['instance_date'].dt.strftime('%b-%Y')
     
-    # Numeric Cleanup
+    # First transaction date per project
+    proj_first_trans = df.groupby('project_name_en')['instance_date'].min().reset_index()
+    proj_first_trans.rename(columns={'instance_date': 'first_trans_date'}, inplace=True)
+    df = df.merge(proj_first_trans, on='project_name_en', how='left')
+    df['start_to_trans_days'] = (df['first_trans_date'] - df['project_start_date']).dt.days.fillna(0)
+    
+    # Ensure units/prices are numeric
     df['no_of_units'] = pd.to_numeric(df['no_of_units'], errors='coerce').fillna(0)
     df['meter_sale_price'] = pd.to_numeric(df['meter_sale_price'], errors='coerce').fillna(0)
     
+    # Drop rows without a developer
+    df = df.dropna(subset=['developer_name_en'])
+    
+    # ---------------------------------------------------------
+    # SAVE AS PARQUET (As Requested)
+    # ---------------------------------------------------------
+    #parquet_path = "processed_market_data.parquet"
+    #parquet_path_fil = "processed_market_data.parquet"
+    #df.to_parquet(parquet_path_fil, index=False)
+    
     return df
 
-# --- MAIN SCRIPT FLOW ---
-
-# Load data once
+# Load the data (Update the path to your actual CSV or Parquet file)
+# If you already have the parquet, you can change the loader above to pd.read_parquet()
 try:
     df_main = load_and_prepare_data("combined_df_2020.parquet")
+    st.sidebar.success("✅ Data Loaded & Saved to Parquet!")
 except Exception as e:
-    st.error(f"Error loading data: {e}")
+    st.error(f"Error loading data. Please check your file path. Details: {e}")
     st.stop()
-
-
-
 
 # ---------------------------------------------------------
 # 3. DYNAMIC CROSS-FILTERING ENGINE (SIDEBAR)
@@ -84,20 +143,13 @@ st.sidebar.header("🎯 Dynamic Filters")
 # This is where your radio button must be to control the view
 view_mode = st.sidebar.radio(
     "📍 Segment View Mode",
-    ["All Segments", "Direct Areas Only", "Proxies Only"])
+    ["All Segments", "Direct Areas Only", "Proxies Only"]
 
 
 # We apply filters step-by-step to cascade the available options
 filtered_df = df_main #.copy()
 
-# --- DEBUGGING BLOCK (Add this at Line 93) ---
-st.write("Is filtered_df None?", filtered_df is None)
-if filtered_df is not None:
-    st.write("Columns in filtered_df:", filtered_df.columns.tolist())
-    st.write("Type of filtered_df:", type(filtered_df))
-# ---------------------------------------------
-
-# Line 94 (The line causing the error)
+# Filter 1: Developer
 devs = st.sidebar.multiselect("Developer", sorted(filtered_df['developer_name_en'].unique()))
 if devs: filtered_df = filtered_df[filtered_df['developer_name_en'].isin(devs)]
 
