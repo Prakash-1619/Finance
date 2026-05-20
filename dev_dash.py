@@ -116,24 +116,27 @@ st.sidebar.header("🎯 Dynamic Filters")
 # We apply filters step-by-step to cascade the available options
 filtered_df = df_main #.copy()
 
-# Filter 1: Developer
+
+# Filter 1: Market Segment (Checkbox Loop inside Expander)
+# This keeps the sidebar clean!
+with st.sidebar.expander("📍 Market Segments"):
+    unique_segs = sorted(filtered_df['market_segment'].unique())
+    selected_segs = []
+    
+    # Create a checkbox for every unique segment
+    for seg in unique_segs:
+        # Note: We use 'st.checkbox' here because it's already inside 
+        # the sidebar expander context.
+        if st.checkbox(seg, value=True):
+            selected_segs.append(seg)
+
+    # Apply filter
+    if selected_segs:
+        filtered_df = filtered_df[filtered_df['market_segment'].isin(selected_segs)]
+
+# Filter 2: Developer
 devs = st.sidebar.multiselect("Developer", sorted(filtered_df['developer_name_en'].unique()))
 if devs: filtered_df = filtered_df[filtered_df['developer_name_en'].isin(devs)]
-
-# Filter 2: Market Segment (Checkbox Loop)
-st.sidebar.subheader("Market Segment")
-unique_segs = sorted(filtered_df['market_segment'].unique())
-selected_segs = []
-
-# Create a checkbox for every unique segment
-for seg in unique_segs:
-    # We set default value=True so everything is selected initially
-    if st.sidebar.checkbox(seg, value=True):
-        selected_segs.append(seg)
-
-# Apply filter
-if selected_segs:
-    filtered_df = filtered_df[filtered_df['market_segment'].isin(selected_segs)]
     
 # Filter 3: Project
 projs = st.sidebar.multiselect("Project", sorted(filtered_df['project_name_en'].dropna().unique()))
