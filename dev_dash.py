@@ -70,17 +70,7 @@ except Exception as e:
     st.error(f"Error loading data: {e}")
     st.stop()
 
-# Define the sidebar radio button
-view_mode = st.sidebar.radio("📍 Segment View Mode", ["All Segments", "Direct Areas Only", "Proxies Only"])
 
-# Apply the filter based on the choice
-proxy_names = ['G1', 'G2', 'G3', 'G4', 'G5', 'Proxy1', 'Proxy2', 'Proxy3']
-if view_mode == "Direct Areas Only":
-    filtered_df = df_main[~df_main['market_segment'].isin(proxy_names)].copy()
-elif view_mode == "Proxies Only":
-    filtered_df = df_main[df_main['market_segment'].isin(proxy_names)].copy()
-else:
-    filtered_df = df_main.copy()
 
 
 # ---------------------------------------------------------
