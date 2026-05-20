@@ -44,14 +44,34 @@ def load_and_prepare_data(file_path):
         }
     }
     
-    proxy_map = {area: group for group, areas in market_mappings['proxies'].items() for area in areas}
-    def map_segment(area):
-        if area in proxy_map: return proxy_map[area]
-        if area in market_mappings['direct_areas']: return area
-        return 'Other'
-
-    # Apply mappings
-    df['market_segment'] = df['area_name_en'].apply(map_segment)
+    #proxy_map = {area: group for group, areas in market_mappings['proxies'].items() for area in areas}
+    if area in proxy_map:
+        return proxy_map[area]
+    if area in market_mappings['direct_areas']:
+        return area
+    # 1. Update the mapping function to collect ALL matches in a list
+    def map_segments(area):
+        segments = []
+        
+        # Add as a direct area if it's in the list
+        if area in market_mappings['direct_areas']:
+            segments.append(area)
+            
+        # Also add as a proxy group if it belongs to one
+        if area in proxy_map:
+            segments.append(proxy_map[area])
+            
+        # If it matched neither, label it 'Other'
+        if len(segments) == 0:
+            return ['Other']
+            
+        return segments
+    
+    # 2. Apply the function and use .explode() to split the lists into separate rows
+    df['market_segment'] = df['area_name_en'].apply(map_segments)
+    df = df.explode('market_segment')
+    
+    # 3. Drop 'Other' as usual
     df = df[df['market_segment'] != 'Other'].copy()
 
     # 3. Format Dates & Durations
@@ -132,8 +152,10 @@ if filtered_df.empty:
     st.stop()
 
 # Calculations
-total_trans = len(filtered_df)
-avg_price = filtered_df['meter_sale_price'].median()
+#total_trans = len(filtered_df)
+total_trans = filtered_df['transaction_id'].nunique()
+#avg_price = filtered_df['meter_sale_price'].median()
+avg_price = filtered_df.drop_duplicates(subset=['transaction_id'])['meter_sale_price'].median()
 unique_projs = filtered_df['project_name_en'].nunique()
 total_units = filtered_df.drop_duplicates(subset=['project_number'])['no_of_units'].sum()
 
