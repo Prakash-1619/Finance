@@ -198,7 +198,7 @@ with tab1:
         secondary_y=True,
     )
     fig_season.update_layout(height=400, margin=dict(l=0, r=0, t=30, b=0), hovermode="x unified")
-    st.plotly_chart(fig_season, use_container_width=True)
+    st.plotly_chart(fig_season, width="stretch")
 
     
     colA, colB = st.columns(2)
@@ -217,7 +217,7 @@ with tab1:
                     color_continuous_scale="Viridis"
                 )
         fig_heat.update_layout(height=400, margin=dict(l=0, r=0, t=30, b=0))
-        st.plotly_chart(fig_heat, use_container_width=True)
+        st.plotly_chart(fig_heat, width="stretch")
         
     with colB:
         st.subheader("Top Developer Activity Heatmap")
@@ -230,7 +230,7 @@ with tab1:
             color_continuous_scale="Blues"
         )
         fig_dev_heat.update_layout(height=400, margin=dict(l=0, r=0, t=30, b=0))
-        st.plotly_chart(fig_dev_heat, use_container_width=True)
+        st.plotly_chart(fig_dev_heat,width="stretch")
 
 
 # --- TAB 2: PROJECT DEEP DIVE ---
@@ -246,7 +246,7 @@ with tab2:
         
         fig_reg = px.bar(reg_agg, x='project_name_en', y='meter_sale_price', color='reg_type_en', barmode='group')
         fig_reg.update_layout(height=400, margin=dict(l=0, r=0, t=30, b=0), xaxis_title="", legend_title="Reg Type")
-        st.plotly_chart(fig_reg, use_container_width=True)
+        st.plotly_chart(fig_reg, width="stretch")
         
     with colD:
         st.subheader("Launch vs First Transaction Gap (Days)")
