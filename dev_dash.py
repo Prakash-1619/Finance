@@ -214,37 +214,41 @@ with tab1:
 
     
     colA, colB = st.columns(2)
+    
     with colA:
         st.subheader("Segment Performance Heatmap")
-        # Ensure correct sorting
-        #filtered_df['sort_date'] = pd.to_datetime(filtered_df['month_year'], format='%b-%Y')
-        #sorted_df = filtered_df.sort_values('sort_date')
-        # Sort using the existing datetime column to save RAM!
-        sorted_df = filtered_df.sort_values('instance_date')
         
+        # MEMORY FIX: Use filtered_df directly without pre-sorting
         fig_heat = px.density_heatmap(
-                    sorted_df, 
-                    x="month_year", 
-                    y="market_segment", 
-                    z="meter_sale_price", 
-                    histfunc="avg", # <--- CHANGE THIS FROM "median" TO "avg"
-                    color_continuous_scale="Viridis"
-                )
+            filtered_df, 
+            x="month_year", 
+            y="market_segment", 
+            z="meter_sale_price", 
+            histfunc="avg", 
+            color_continuous_scale="Viridis",
+            category_orders={"month_year": sorted_months} # <--- Forces chronological order cleanly
+        )
         fig_heat.update_layout(height=400, margin=dict(l=0, r=0, t=30, b=0))
         st.plotly_chart(fig_heat, width="stretch")
         
     with colB:
         st.subheader("Top Developer Activity Heatmap")
+        
         # Get top 15 devs by transaction volume
         top_devs = filtered_df['developer_name_en'].value_counts().nlargest(15).index
-        dev_heat_df = sorted_df[sorted_df['developer_name_en'].isin(top_devs)]
+        
+        # MEMORY FIX: Slice directly from filtered_df
+        dev_heat_df = filtered_df[filtered_df['developer_name_en'].isin(top_devs)]
         
         fig_dev_heat = px.density_heatmap(
-            dev_heat_df, x="month_year", y="developer_name_en", 
-            color_continuous_scale="Blues"
+            dev_heat_df, 
+            x="month_year", 
+            y="developer_name_en", 
+            color_continuous_scale="Blues",
+            category_orders={"month_year": sorted_months} # <--- Forces chronological order cleanly
         )
         fig_dev_heat.update_layout(height=400, margin=dict(l=0, r=0, t=30, b=0))
-        st.plotly_chart(fig_dev_heat,width="stretch")
+        st.plotly_chart(fig_dev_heat, width="stretch")
 
 
 # --- TAB 2: PROJECT DEEP DIVE ---
@@ -405,14 +409,14 @@ with tab4:
     st.subheader("⭐ Strategic Developer Matrix")
     st.markdown("Analyze developers by identifying who pushes high **volumes**, who commands **premium prices**, and the **scale** of their project unit launches.")
     
-    # 1. Calculate transactions and price (dropping duplicate transaction IDs)
-    matrix_agg = filtered_df.drop_duplicates(subset=['transaction_id']).groupby('developer_name_en').agg(
+    # 1. Calculate transactions and price (dropping duplicate transaction IDs)# 1. Slice ONLY the columns we need before dropping duplicates to save RAM!
+    matrix_agg = filtered_df[['transaction_id', 'developer_name_en', 'meter_sale_price']].drop_duplicates(subset=['transaction_id']).groupby('developer_name_en').agg(
         median_price=('meter_sale_price', 'median'),
         total_transactions=('transaction_id', 'count')
     ).reset_index()
 
-    # 2. Calculate total units separately (dropping duplicate project numbers)
-    units_agg = filtered_df.drop_duplicates(subset=['project_number']).groupby('developer_name_en')['no_of_units'].sum().reset_index()
+    # 2. Slice ONLY the columns we need here too!
+    units_agg = filtered_df[['project_number', 'developer_name_en', 'no_of_units']].drop_duplicates(subset=['project_number']).groupby('developer_name_en')['no_of_units'].sum().reset_index()
     units_agg.rename(columns={'no_of_units': 'total_units_launched'}, inplace=True)
 
     # 3. Merge them together to build the matrix!
