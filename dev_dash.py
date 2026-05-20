@@ -243,7 +243,7 @@ with tab2:
     
     fig_room = px.line(room_agg, x='month_year', y='median_price', color='rooms_en', markers=True)
     fig_room.update_layout(height=400, margin=dict(l=0, r=0, t=30, b=0), hovermode="x unified")
-    st.plotly_chart(fig_room, use_container_width=True)
+    st.plotly_chart(fig_room,width="stretch")
 
 
 # --- TAB 3: DATA TABLE ---
@@ -261,7 +261,7 @@ with tab3:
     # Apply styling natively using Streamlit column_config
     st.dataframe(
         table_agg,
-        use_container_width=True,
+        width="stretch",
         height=600,
         column_config={
             "median_price": st.column_config.NumberColumn(
@@ -312,4 +312,4 @@ with tab4:
     fig_matrix.add_vline(x=x_mid, line_dash="dot", line_color="gray", opacity=0.5)
     
     fig_matrix.update_layout(height=600, showlegend=False, margin=dict(l=0, r=0, t=30, b=0))
-    st.plotly_chart(fig_matrix, use_container_width=True)
+    st.plotly_chart(fig_matrix, width="stretch")
