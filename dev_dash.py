@@ -188,9 +188,13 @@ with tab1:
         sorted_df = filtered_df.sort_values('sort_date')
         
         fig_heat = px.density_heatmap(
-            sorted_df, x="month_year", y="market_segment", z="meter_sale_price", 
-            histfunc="median", color_continuous_scale="Viridis"
-        )
+                    sorted_df, 
+                    x="month_year", 
+                    y="market_segment", 
+                    z="meter_sale_price", 
+                    histfunc="avg", # <--- CHANGE THIS FROM "median" TO "avg"
+                    color_continuous_scale="Viridis"
+                )
         fig_heat.update_layout(height=400, margin=dict(l=0, r=0, t=30, b=0))
         st.plotly_chart(fig_heat, use_container_width=True)
         
