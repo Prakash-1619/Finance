@@ -90,7 +90,14 @@ view_mode = st.sidebar.radio(
 # We apply filters step-by-step to cascade the available options
 filtered_df = df_main #.copy()
 
-# Filter 1: Developer
+# --- DEBUGGING BLOCK (Add this at Line 93) ---
+st.write("Is filtered_df None?", filtered_df is None)
+if filtered_df is not None:
+    st.write("Columns in filtered_df:", filtered_df.columns.tolist())
+    st.write("Type of filtered_df:", type(filtered_df))
+# ---------------------------------------------
+
+# Line 94 (The line causing the error)
 devs = st.sidebar.multiselect("Developer", sorted(filtered_df['developer_name_en'].unique()))
 if devs: filtered_df = filtered_df[filtered_df['developer_name_en'].isin(devs)]
 
