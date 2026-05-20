@@ -120,10 +120,21 @@ filtered_df = df_main #.copy()
 devs = st.sidebar.multiselect("Developer", sorted(filtered_df['developer_name_en'].unique()))
 if devs: filtered_df = filtered_df[filtered_df['developer_name_en'].isin(devs)]
 
-# Filter 2: Market Segment
-segs = st.sidebar.multiselect("Market Segment", sorted(filtered_df['market_segment'].unique()))
-if segs: filtered_df = filtered_df[filtered_df['market_segment'].isin(segs)]
+# Filter 2: Market Segment (Checkbox Loop)
+st.sidebar.subheader("Market Segment")
+unique_segs = sorted(filtered_df['market_segment'].unique())
+selected_segs = []
 
+# Create a checkbox for every unique segment
+for seg in unique_segs:
+    # We set default value=True so everything is selected initially
+    if st.sidebar.checkbox(seg, value=True):
+        selected_segs.append(seg)
+
+# Apply filter
+if selected_segs:
+    filtered_df = filtered_df[filtered_df['market_segment'].isin(selected_segs)]
+    
 # Filter 3: Project
 projs = st.sidebar.multiselect("Project", sorted(filtered_df['project_name_en'].dropna().unique()))
 if projs: filtered_df = filtered_df[filtered_df['project_name_en'].isin(projs)]
