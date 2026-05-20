@@ -526,7 +526,7 @@ with tab4:
         col_t1, col_t2 = st.columns(2)
         
         with col_t1:
-            if 'trans_type_en' in filtered_df.columns:
+            if 'trans_group_en' in filtered_df.columns:
                 st.markdown("**Volume by Transaction Type**")
                 trans_agg = filtered_df['trans_group_en'].value_counts().reset_index()
                 trans_agg.columns = ['Transaction Type', 'Count']
@@ -541,7 +541,7 @@ with tab4:
                 fig_trans.update_layout(margin=dict(l=0, r=0, t=10, b=0))
                 st.plotly_chart(fig_trans, width="stretch")
             else:
-                st.info("ℹ️ The column 'trans_type_en' is not present in the current dataset.")
+                st.info("ℹ️ The column 'trans_group_en' is not present in the current dataset.")
                 
         with col_t2:
             if 'procedure_name_en' in filtered_df.columns:
