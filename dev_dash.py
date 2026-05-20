@@ -16,20 +16,11 @@ st.markdown("Dynamic cross-filtering dashboard with real-time aggregation.")
 # ---------------------------------------------------------
 @st.cache_data
 def load_and_prepare_data(file_path):
-    # 1. Load Data (Only the columns you need for the charts/filters!)
+    # 1. Load Data
+    # Replace this with your actual combined merged dataset path
     parquet_path = "combined_df_2020.parquet"
+    df = pd.read_parquet(parquet_path)
     
-    # Identify exactly which columns you use in your app to speed this up
-    required_cols = [
-        'area_name_en', 'developer_name_en', 'meter_sale_price', 
-        'instance_date', 'project_start_date', 'no_of_units', 
-        'transaction_id', 'project_name_en', 'project_number',
-        'trans_type_en', 'procedure_name_en'
-    ]
-    
-    df = pd.read_parquet(parquet_path, columns=required_cols)
-    # 1. Load the data
-
     # 2. Market Mappings
     market_mappings = {
         'direct_areas': [
@@ -52,22 +43,7 @@ def load_and_prepare_data(file_path):
             'Proxy3': ['Jabal Ali First', "Me'Aisem First"]
         }
     }
-    #df = load_and_prepare_data("combined_df_2020.parquet")
     
-    # 2. PERFORM FILTERING HERE (Before plotting/grouping)
-    proxy_names = ['G1', 'G2', 'G3', 'G4', 'G5', 'Proxy1', 'Proxy2', 'Proxy3']
-    
-    if view_mode == "Direct Areas Only":
-        # Keep only records where market_segment is NOT a proxy
-        filtered_df = df[~df['market_segment'].isin(proxy_names)].copy()
-    elif view_mode == "Proxies Only":
-        # Keep only records where market_segment IS a proxy
-        filtered_df = df[df['market_segment'].isin(proxy_names)].copy()
-    else:
-        # "All Segments"
-        filtered_df = df.copy()
-    
-    # Now proceed to plot using filtered_df...
     # Ensure this line is UNCOMMENTED (no # at the start) so the dictionary is created!
     proxy_map = {area: group for group, areas in market_mappings['proxies'].items() for area in areas}
 
@@ -94,7 +70,7 @@ def load_and_prepare_data(file_path):
     df = df.explode('market_segment')
 
     # 3. Drop 'Other' as usual
-    df = df[df['market_segment'] != 'Other']#.copy()
+    df = df[df['market_segment'] != 'Other'].copy()
 
     # 3. Format Dates & Durations
     df['instance_date'] = pd.to_datetime(df['instance_date'], errors='coerce')
@@ -136,15 +112,6 @@ except Exception as e:
 # 3. DYNAMIC CROSS-FILTERING ENGINE (SIDEBAR)
 # ---------------------------------------------------------
 st.sidebar.header("🎯 Dynamic Filters")
-
-# --- SIDEBAR SECTION ---
-#st.sidebar.header("Filters")
-
-# This is where your radio button must be to control the view
-view_mode = st.sidebar.radio(
-    "📍 Segment View Mode",
-    ["All Segments", "Direct Areas Only", "Proxies Only"])
-
 
 # We apply filters step-by-step to cascade the available options
 filtered_df = df_main #.copy()
