@@ -119,25 +119,25 @@ filtered_df = df_main #.copy()
 
 # Filter 1: Market Segment (Checkbox Loop inside Expander)
 # Filter 1: Market Segment (Checkbox Loop inside Expander)
-        with st.sidebar.expander("📍 Market Segments"):
-            unique_segs = sorted(filtered_df['market_segment'].unique())
-            selected_segs = []
+with st.sidebar.expander("📍 Market Segments"):
+    unique_segs = sorted(filtered_df['market_segment'].unique())
+    selected_segs = []
 
-            # 1. Add a master toggle checkbox
-            select_all = st.checkbox("Select / Deselect All", value=True)
+    # 1. Add a master toggle checkbox
+    select_all = st.checkbox("Select / Deselect All", value=True)
 
-            # Create a checkbox for every unique segment
-            for seg in unique_segs:
-                # 2. Bind the default value to the master toggle
-                if st.checkbox(seg, value=select_all):
-                    selected_segs.append(seg)
+    # Create a checkbox for every unique segment
+    for seg in unique_segs:
+        # 2. Bind the default value to the master toggle
+        if st.checkbox(seg, value=select_all):
+            selected_segs.append(seg)
 
-        # Apply filter
-        if selected_segs:
-            filtered_df = filtered_df[filtered_df['market_segment'].isin(selected_segs)]
-        else:
-            # 3. If nothing is selected, clear the dataframe so the dashboard reflects the deselection
-            filtered_df = filtered_df.iloc[0:0]
+# Apply filter
+if selected_segs:
+    filtered_df = filtered_df[filtered_df['market_segment'].isin(selected_segs)]
+else:
+    # 3. If nothing is selected, clear the dataframe so the dashboard reflects the deselection
+    filtered_df = filtered_df.iloc[0:0]
 
 # Filter 2: Developer
 devs = st.sidebar.multiselect("Developer", sorted(filtered_df['developer_name_en'].unique()))
