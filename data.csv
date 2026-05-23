@@ -16,7 +16,6 @@ Date,Transaction Type,Payment Status,Amount,Frequency,Payment App,Phone Number,B
 2026-05-20,Expenditure,Completed / Received,100.0,One-time,BHIM,9550927050,FI/Federal,Navaneeth,HP,Friends lending,Helping,,{}
 2026-05-19,Expenditure,Completed / Received,4000.0,One-time,,9550927050,FI/Federal,,,Personal,Other,Cash withdrawal  - Navaneeth,"{""Details"": """"}"
 2026-05-19,Expenditure,Completed / Received,3500.0,One-time,,9550927050,FI/Federal,Babulu,,Friends lending,Lending Out,,"{""Agreed Return Amount"": 0.0, ""Expected Return Date"": ""2026-06-05"", ""Send Reminder?"": ""Yes""}"
-2026-05-19,Expenditure,Completed / Received,3500.0,One-time,,9550927050,Cash,Babulu,,Friends lending,Lending Out,,"{""Agreed Return Amount"": 0.0, ""Expected Return Date"": ""2026-06-05"", ""Send Reminder?"": ""Yes""}"
 2026-05-19,Expenditure,Completed / Received,500.0,One-time,PhonePe,9550927050,FI/Federal,Babulu,,Friends lending,Lending Out,,"{""Agreed Return Amount"": 0.0, ""Expected Return Date"": ""2026-06-05"", ""Send Reminder?"": ""Yes""}"
 2026-05-19,Expenditure,Completed / Received,500.0,One-time,PhonePe,9550927050,FI/Federal,Babulu,,Friends lending,Lending Out,,"{""Agreed Return Amount"": 0.0, ""Expected Return Date"": ""2026-06-05"", ""Send Reminder?"": ""Yes""}"
 2026-05-19,Expenditure,Completed / Received,800.0,One-time,PhonePe,9550927050,FI/Federal,Viswanath,PVP,Agri Land,Ploughing,,"{""Plot"": ""1,2,3,4"", ""Crop"": ""Fodder"", ""Crop/Season"": """"}"
