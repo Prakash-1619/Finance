@@ -16,7 +16,7 @@ def render_form_tab():
         col1, col2, col3 = st.columns(3)
         with col1:
             entry_date = st.date_input("Transaction Date", date.today())
-            trans_type = st.radio("Type", ["Expenditure", "Income", "Loans", "EMI"], horizontal=True)
+            trans_type = st.radio("Type", ["Expenditure", "Income", ], horizontal=True) #"Loans", "EMI"
             amount = st.number_input("Amount", min_value=0.0, step=100.0, format="%.2f")
             
         with col2:
@@ -44,8 +44,8 @@ def render_form_tab():
         # --- DOMAIN SPECIFIC LOGIC ---
         st.subheader("Domain Specifics")
         
-        if trans_type == "Income": domain_list = ["Salary", "Car", "Sheep", "Personal", "Home", "Agri Land", "Loans", "Friends lending","Cows"]
-        elif trans_type in ["Loans", "EMI"]: domain_list = [trans_type]
+        if trans_type == "Income": domain_list = ["Salary", "Car", "Sheep", "Personal", "Home", "Agri Land", "Loans", "Friends lending","Cows", "EMI"]
+        #elif trans_type in ["Loans", "EMI"]: domain_list = [trans_type]
         else: domain_list = ["Car", "Sheep","Cows", "Personal", "Home", "Agri Land", "Friends lending","EMI", "Loans"]
 
         domain = st.selectbox("Select Domain / Category", domain_list)
@@ -118,12 +118,20 @@ def render_form_tab():
                 extra["Agreed Return Amount"] = st.number_input("Expected Return Amount", min_value=0.0)
                 extra["Expected Return Date"] = str(st.date_input("When Returning?", date.today()))
                 extra["Send Reminder?"] = st.selectbox("Needs Reminder?", ["Yes", "No"])
-        elif domain == "Loans" and trans_type in ["Income", "Expenditure"]:
+        elif domain == "Loans" and trans_type in ["Income"]:
             sub_category = st.selectbox("Asset Loan Against", ["Gold", "Car", "Land", "Personal", "Business"])
             extra["Interest Type"] = st.selectbox("Interest Type", ["Flat Rate", "Reducing Balance"])
             extra["Interest Rate/Amt"] = st.text_input("Interest Rate")
             extra["Tenure (Months)"] = st.number_input("Tenure (Months)", min_value=1)
             extra["Projected End Date"] = str(st.date_input("End Date", date.today()))
+        elif domain == "Loans" and trans_type in ["Expenditure"]:
+            sub_category = st.selectbox("Asset Loan Against", ["Gold", "Car", "Land", "Personal", "Business"])
+            extra["Principal"] = st.number_input("Loan amount", min_value=1)
+            extra["Interest Type"] = st.selectbox("Interest Type", ["Flat Rate", "Reducing Balance"])
+            extra["Interest Rate/Amt"] = st.text_input("Interest Rate")
+            extra["Interest"] = st.number_input("Interest Amount", min_value=1)
+            extra["Tenure (Months)"] = st.number_input("Tenure (Months)", min_value=1)
+            extra["Loan Date"] = str(st.date_input("Loan Date", date.today()))
         elif domain == "EMI" and trans_type in ["Income", "Expenditure"]:
             sub_category = st.selectbox("Loan Type", ["Personal", "Vehicle", "Home", "Other"])
             extra["Loan Name"] = st.text_input("Loan Name")
@@ -144,7 +152,7 @@ def render_form_tab():
             save_clicked = st.button("💾 Save to GitHub", type="primary", use_container_width=True, disabled=not confirm, on_click=reset_form)
 
         if save_clicked:
-            if amount <= 0 and trans_type not in ["Loans", "EMI"]:
+            if amount <= 0 and domain not in ["Loans", "EMI"]:
                 with msg_col: st.error("Please enter a valid amount.")
             else:
                 with st.spinner("Syncing to GitHub..."):
