@@ -24,4 +24,5 @@ Date,Transaction Type,Payment Status,Amount,Frequency,Payment App,Phone Number,B
 2026-06-01,Expenditure,Completed / Received,200.0,One-time,PhonePe,9550927050,SBI,,,Personal,Food,,{}
 2026-05-04,Loans,Completed / Received,380000.0,One-time,,Other,Indian Bank,,,Loans,Gold,Gold loan,"{""Interest Type"": ""Flat Rate"", ""Interest Rate/Amt"": ""9"", ""Tenure (Months)"": 12, ""Projected End Date"": ""2027-05-03""}"
 2026-05-04,Loans,Completed / Received,400000.0,One-time,,Other,Indian Bank,,,Loans,Gold,Gold loan,"{""Interest Type"": ""Flat Rate"", ""Interest Rate/Amt"": ""9"", ""Tenure (Months)"": 12, ""Projected End Date"": ""2027-05-03""}"
-2026-06-03,Income,Completed / Received,380000.0,One-time,None,Other,Indian Bank,,,Loans,Gold,Chians - 2,"{""Interest Type"": ""Flat Rate"", ""Interest Rate/Amt"": ""9"", ""Tenure (Months)"": 12, ""Projected End Date"": ""2027-05-03""}"
+2026-06-03,Income,Completed / Received,380000.0,One-time,,Other,Indian Bank,,,Loans,Gold,Chians - 2,"{""Interest Type"": ""Flat Rate"", ""Interest Rate/Amt"": ""9"", ""Tenure (Months)"": 12, ""Projected End Date"": ""2027-05-03""}"
+2026-06-03,Income,Completed / Received,400000.0,One-time,None,Other,Indian Bank,Prakash,,Loans,Gold,ear rings and single row chain,"{""Interest Type"": ""Flat Rate"", ""Interest Rate/Amt"": ""9"", ""Tenure (Months)"": 12, ""Projected End Date"": ""2027-05-03""}"
