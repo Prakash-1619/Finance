@@ -27,7 +27,6 @@ Date,Transaction Type,Payment Status,Amount,Frequency,Payment App,Phone Number,B
 2026-05-04,Income,Completed / Received,400000.0,One-time,,Other,Indian Bank,Prakash,,Loans,Gold,ear rings and single row chain,"{""Interest Type"": ""Flat Rate"", ""Interest Rate/Amt"": ""9"", ""Tenure (Months)"": 12, ""Projected End Date"": ""2026-05-03""}"
 2026-05-04,Expenditure,Completed / Received,1251.0,One-time,,Other,Indian Bank,Prakash,,Loans,Gold,2 two row chains - processing fee,"{""Principal"": 380000, ""Interest Type"": ""Flat Rate"", ""Interest Rate/Amt"": ""9"", ""Interest"": 0.0, ""Tenure (Months)"": 0.0, ""Loan Date"": ""2026-05-04""}"
 2026-05-04,Expenditure,Completed / Received,1298.0,One-time,,Other,Indian Bank,Prakash,,Loans,Gold,2 ear rings and chains - processing fee,"{""Principal"": 400000, ""Interest Type"": ""other"", ""Interest Rate/Amt"": """", ""Interest"": 0.0, ""Tenure (Months)"": 0.0, ""Loan Date"": ""2026-05-04""}"
-2026-05-01,Expenditure,Completed / Received,899.0,One-time,Super Money,9550927050,SBI,Prakash,,Personal,Recharge,Recharge amount,"{""Mobile Number"": ""7702486843""}"
 2026-05-01,Income,Completed / Received,500.0,One-time,Super Money,9550927050,SBI,Vani,,Personal,,Recharge amount,"{""Details"": """"}"
 2026-06-01,Income,Completed / Received,500.0,One-time,Super Money,9550927050,SBI,Vani,,Personal,,Recharge amount,"{""Details"": """"}"
 2026-06-01,Expenditure,Completed / Received,899.0,One-time,BHIM,9550927050,SBI,Prakash,,Personal,Recharge,Recharge amount,"{""Mobile Number"": ""9550927050""}"
