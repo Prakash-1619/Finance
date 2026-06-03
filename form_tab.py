@@ -46,7 +46,7 @@ def render_form_tab():
         
         if trans_type == "Income": domain_list = ["Salary", "Car", "Sheep", "Personal", "Home", "Agri Land", "Loans", "Friends lending","Cows"]
         elif trans_type in ["Loans", "EMI"]: domain_list = [trans_type]
-        else: domain_list = ["Car", "Sheep","Cows", "Personal", "Home", "Agri Land", "Friends lending"]
+        else: domain_list = ["Car", "Sheep","Cows", "Personal", "Home", "Agri Land", "Friends lending","EMI", "Loans"]
 
         domain = st.selectbox("Select Domain / Category", domain_list)
         sub_category = ""
@@ -118,13 +118,13 @@ def render_form_tab():
                 extra["Agreed Return Amount"] = st.number_input("Expected Return Amount", min_value=0.0)
                 extra["Expected Return Date"] = str(st.date_input("When Returning?", date.today()))
                 extra["Send Reminder?"] = st.selectbox("Needs Reminder?", ["Yes", "No"])
-        elif domain == "Loans":
+        elif domain == "Loans" and trans_type in ["Income", "Expenditure"]:
             sub_category = st.selectbox("Asset Loan Against", ["Gold", "Car", "Land", "Personal", "Business"])
             extra["Interest Type"] = st.selectbox("Interest Type", ["Flat Rate", "Reducing Balance"])
             extra["Interest Rate/Amt"] = st.text_input("Interest Rate")
             extra["Tenure (Months)"] = st.number_input("Tenure (Months)", min_value=1)
             extra["Projected End Date"] = str(st.date_input("End Date", date.today()))
-        elif domain == "EMI":
+        elif domain == "EMI" and trans_type in ["Income", "Expenditure"]:
             sub_category = st.selectbox("Loan Type", ["Personal", "Vehicle", "Home", "Other"])
             extra["Loan Name"] = st.text_input("Loan Name")
             extra["Next Due Date"] = str(st.date_input("Next EMI Due Date", date.today()))
