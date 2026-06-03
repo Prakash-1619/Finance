@@ -44,9 +44,9 @@ def render_form_tab():
         # --- DOMAIN SPECIFIC LOGIC ---
         st.subheader("Domain Specifics")
         
-        if trans_type == "Income": domain_list = ["Salary", "Car", "Sheep", "Personal", "Home", "Agri Land", "Loans", "Friends lending","Cows", "EMI"]
+        if trans_type == "Income": domain_list = ["Salary", "Car", "Sheep", "Personal", "Home", "Agri Land", "Loans", "Friends lending","Cows", "EMI","Miscellaneous"]
         #elif trans_type in ["Loans", "EMI"]: domain_list = [trans_type]
-        else: domain_list = ["Car", "Sheep","Cows", "Personal", "Home", "Agri Land", "Friends lending","EMI", "Loans"]
+        else: domain_list = ["Car", "Sheep","Cows", "Personal", "Home", "Agri Land", "Friends lending","EMI", "Loans","Miscellaneous"]
 
         domain = st.selectbox("Select Domain / Category", domain_list)
         sub_category = ""
@@ -137,6 +137,10 @@ def render_form_tab():
             extra["Loan Name"] = st.text_input("Loan Name")
             extra["Next Due Date"] = str(st.date_input("Next EMI Due Date", date.today()))
             extra["Tenure Remaining"] = st.text_input("Months Remaining")
+        elif domain == "Miscellaneous" and trans_type in ["Income", "Expenditure"]:
+            extra["Name"] = st.text_input(" Name")
+            extra["Contact number"] = st.text_input("Enter mobile number")
+            extra["Details"] = st.text_input("Details")
 
         st.divider()
 
