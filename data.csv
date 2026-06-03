@@ -20,3 +20,4 @@ Date,Transaction Type,Payment Status,Amount,Frequency,Payment App,Phone Number,B
 2026-05-19,Expenditure,Completed / Received,800.0,One-time,PhonePe,9550927050,FI/Federal,Viswanath,PVP,Agri Land,Ploughing,,"{""Plot"": ""1,2,3,4"", ""Crop"": ""Fodder"", ""Crop/Season"": """"}"
 2026-05-31,Income,Completed / Received,720.0,One-time,GPay,7702486243,SBI,,Bla Bla,Car,,,{}
 2026-05-31,Income,Completed / Received,300.0,One-time,GPay,7702486243,SBI,,friends,Car,,For driving learning,{}
+2026-05-31,Expenditure,Completed / Received,800.0,One-time,GPay,7702486243,SBI,,,Car,Diesel,,"{""Shop/Org Name"": ""Indian"", ""Current Odometer (KM)"": 92800, ""Price per litre"": 98.23}"
