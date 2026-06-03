@@ -306,7 +306,7 @@ def render_funds_tab(data):
         st.dataframe(filt_g.sort_values('Date', ascending=False), use_container_width=True)
 
         st.divider()
-        render_delete_interface(filt_inc, "global_overview")
+        render_delete_interface(filt_g, "global_overview")
 
     # 2. GLOBAL INCOME
     with tabs[1]: 
