@@ -23,4 +23,5 @@ Date,Transaction Type,Payment Status,Amount,Frequency,Payment App,Phone Number,B
 2026-05-31,Expenditure,Completed / Received,800.0,One-time,GPay,7702486243,SBI,,,Car,Diesel,,"{""Shop/Org Name"": ""Indian"", ""Current Odometer (KM)"": 92800, ""Price per litre"": 98.23}"
 2026-06-01,Income,Completed / Received,200.0,One-time,PhonePe,9550927050,SBI,Vani,,Friends lending,,,{}
 2026-06-01,Expenditure,Completed / Received,200.0,One-time,PhonePe,9550927050,SBI,,,Personal,Food,,{}
-2026-05-04,Loans,Completed / Received,380000.0,One-time,None,Other,Indian Bank,,,Loans,Gold,Gold loan,"{""Interest Type"": ""Flat Rate"", ""Interest Rate/Amt"": ""9"", ""Tenure (Months)"": 12, ""Projected End Date"": ""2027-05-03""}"
+2026-05-04,Loans,Completed / Received,380000.0,One-time,,Other,Indian Bank,,,Loans,Gold,Gold loan,"{""Interest Type"": ""Flat Rate"", ""Interest Rate/Amt"": ""9"", ""Tenure (Months)"": 12, ""Projected End Date"": ""2027-05-03""}"
+2026-05-04,Loans,Completed / Received,400000.0,One-time,None,Other,Indian Bank,,,Loans,Gold,Gold loan,"{""Interest Type"": ""Flat Rate"", ""Interest Rate/Amt"": ""9"", ""Tenure (Months)"": 12, ""Projected End Date"": ""2027-05-03""}"
