@@ -21,7 +21,6 @@ Date,Transaction Type,Payment Status,Amount,Frequency,Payment App,Phone Number,B
 2026-05-31,Expenditure,Completed / Received,800.0,One-time,GPay,7702486243,SBI,,,Car,Diesel,,"{""Shop/Org Name"": ""Indian"", ""Current Odometer (KM)"": 92800, ""Price per litre"": 98.23}"
 2026-06-01,Income,Completed / Received,200.0,One-time,PhonePe,9550927050,SBI,Vani,,Friends lending,,,{}
 2026-06-01,Expenditure,Completed / Received,200.0,One-time,PhonePe,9550927050,SBI,,,Personal,Food,,{}
-2026-05-04,Loans,Completed / Received,380000.0,One-time,,Other,Indian Bank,,,Loans,Gold,Gold loan,"{""Interest Type"": ""Flat Rate"", ""Interest Rate/Amt"": ""9"", ""Tenure (Months)"": 12, ""Projected End Date"": ""2027-05-03""}"
 2026-05-04,Expenditure,Completed / Received,310953.0,One-time,,Other,Indian Bank,Prakash,,Loans,Gold,ear rings and single row chain,"{""Principal"": 29000, ""Interest Type"": ""Flat Rate"", ""Interest Rate/Amt"": ""9"", ""Interest"": 20953, ""Tenure (Months)"": 10, ""Loan Date"": ""2025-06-16""}"
 2026-05-04,Expenditure,Completed / Received,321525.0,One-time,,Other,Indian Bank,Prakash,,Loans,Gold,ear rings and single row chain,"{""Principal"": 30000, ""Interest Type"": ""Flat Rate"", ""Interest Rate/Amt"": ""9"", ""Interest"": 21525, ""Tenure (Months)"": 10, ""Loan Date"": ""2025-06-16""}"
 2026-05-04,Income,Completed / Received,380000.0,One-time,,Other,Indian Bank,Prakash,,Loans,Gold,ear rings and single row chain,"{""Interest Type"": ""Flat Rate"", ""Interest Rate/Amt"": ""9"", ""Tenure (Months)"": 12, ""Projected End Date"": ""2026-05-03""}"
