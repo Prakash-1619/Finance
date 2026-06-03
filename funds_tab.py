@@ -222,7 +222,7 @@ def render_funds_tab(data):
             start_date, end_date = dates[0], dates[0]
             
     df = df_raw[(df_raw['Date'] >= start_date) & (df_raw['Date'] <= end_date)].copy()
-    tabs = st.tabs(["📊 Overview", "🟩 Income", "🟥 Expenditure", "💸 Loans","💳 EMI","🚗 Car", "🐄 Cows", "🐑 Sheep", "🌱 Agri", "🏠 Home", "🧍 Personal", "🤝 Friends"])
+    tabs = st.tabs(["📊 Overview", "🟩 Income", "🟥 Expenditure", "💸 Loans","💳 EMI","🚗 Car", "🐄 Cows", "🐑 Sheep", "🌱 Agri", "🏠 Home", "🧍 Personal", "🤝 Friends","🧩 Miscellaneous"])
 
     # 1. GLOBAL OVERVIEW
     with tabs[0]: 
@@ -361,7 +361,7 @@ def render_funds_tab(data):
         render_delete_interface(filt_exp, "global_expenditure")
 
     # 4. DOMAIN DASHBOARDS
-    dom_list = ["Loans", "EMI", "Car", "Cows", "Sheep", "Agri Land", "Home", "Personal", "Friends lending"]
+    dom_list = ["Loans", "EMI", "Car", "Cows", "Sheep", "Agri Land", "Home", "Personal", "Friends lending","Miscellaneous"]
     for i, d_name in enumerate(dom_list):
         # Changed to i+3 so Loans maps to tabs[3], EMI to tabs[4], etc.
         render_domain_dashboard(d_name, tabs[i+3], df_raw, start_date, end_date)
