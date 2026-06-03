@@ -44,9 +44,9 @@ def render_form_tab():
         # --- DOMAIN SPECIFIC LOGIC ---
         st.subheader("Domain Specifics")
         
-        if trans_type == "Income": domain_list = ["Salary", "Car", "Sheep", "Personal", "Home", "Agri Land", "Loans", "Friends lending","Cows", "EMI","Miscellaneous"]
+        if trans_type == "Income": domain_list = ["Salary", "Car", "Sheep", "Personal", "Home", "Agri Land", "Loans", "Friends lending","Cows", "Miscellaneous"]
         #elif trans_type in ["Loans", "EMI"]: domain_list = [trans_type]
-        else: domain_list = ["Car", "Sheep","Cows", "Personal", "Home", "Agri Land", "Friends lending","EMI", "Loans","Miscellaneous"]
+        else: domain_list = ["Car", "Sheep","Cows", "Personal", "Home", "Agri Land", "Friends lending", "Loans","Miscellaneous"]
 
         domain = st.selectbox("Select Domain / Category", domain_list)
         sub_category = ""
@@ -125,18 +125,28 @@ def render_form_tab():
             extra["Tenure (Months)"] = st.number_input("Tenure (Months)", min_value=1)
             extra["Projected End Date"] = str(st.date_input("End Date", date.today()))
         elif domain == "Loans" and trans_type in ["Expenditure"]:
-            sub_category = st.selectbox("Asset Loan Against", ["Gold", "Car", "Land", "Personal", "Business"])
-            extra["Principal"] = st.number_input("Loan amount", min_value=1)
-            extra["Interest Type"] = st.selectbox("Interest Type", ["Flat Rate", "Reducing Balance","other"])
-            extra["Interest Rate/Amt"] = st.text_input("Interest Rate")
-            extra["Interest"] = st.number_input("Interest Amount")
-            extra["Tenure (Months)"] = st.number_input("Tenure (Months)")
-            extra["Loan Date"] = str(st.date_input("Loan Date", date.today()))
-        elif domain == "EMI" and trans_type in ["Income", "Expenditure"]:
-            sub_category = st.selectbox("Loan Type", ["Personal", "Vehicle", "Home", "Other"])
-            extra["Loan Name"] = st.text_input("Loan Name")
-            extra["Next Due Date"] = str(st.date_input("Next EMI Due Date", date.today()))
-            extra["Tenure Remaining"] = st.text_input("Months Remaining")
+            sub_category = st.selectbox("Asset Loan Against", ["Gold", "Car", "Land", "Personal", "Business", "EMI","Vehicle", "Home"," "Other"])
+            if sub_category == "Other":
+                extra["Loan Name"] = st.text_input("Loan Name")
+             if sub_category != "EMI"
+                extra["Loan Name"] = st.text_input("Loan Name")
+                extra["Principal"] = st.number_input("Loan amount", min_value=1)
+                extra["Interest Type"] = st.selectbox("Interest Type", ["Flat Rate", "Reducing Balance","other"])
+                extra["Interest Rate/Amt"] = st.text_input("Interest Rate")
+                extra["Interest"] = st.number_input("Interest Amount")
+                extra["Tenure (Months)"] = st.number_input("Tenure (Months)")
+                extra["Loan Date"] = str(st.date_input("Loan Date", date.today()))
+            if sub_category == "EMI" :
+                sub_category = st.selectbox("Loan Type", ["Personal", "Vehicle", "Home", "Other"])
+                emi_type = st.selectbox("Emi Type", ["Reducing","Interest", "Other"])
+                extra["Loan Name"] = st.text_input("Loan Name")
+                extra["Loan amount"] = st.text_input("Loan amount")
+                extra["Interest rate"] = st.text_input("Interest")
+                if emi_type == "Reducing":
+                    extra["Next Due Date"] = str(st.date_input("Next EMI Due Date", date.today()))
+                    extra["Tenure Remaining"] = st.text_input("Months Remaining")
+
+            
         elif domain == "Miscellaneous" and trans_type in ["Income", "Expenditure"]:
             extra["Name"] = st.text_input(" Name")
             extra["Contact number"] = st.text_input("Enter mobile number")
