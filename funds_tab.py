@@ -222,7 +222,7 @@ def render_funds_tab(data):
             start_date, end_date = dates[0], dates[0]
             
     df = df_raw[(df_raw['Date'] >= start_date) & (df_raw['Date'] <= end_date)].copy()
-    tabs = st.tabs(["📊 Overview", "🟩 Income", "🟥 Expenditure", "💸 Loans", "🚗 Car", "🐄 Cows", "🐑 Sheep", "🌱 Agri", "🏠 Home", "🧍 Personal", "🤝 Friends"])
+    tabs = st.tabs(["📊 Overview", "🟩 Income", "🟥 Expenditure", "💸 Loans","💳 EMI","🚗 Car", "🐄 Cows", "🐑 Sheep", "🌱 Agri", "🏠 Home", "🧍 Personal", "🤝 Friends"])
 
     # 1. GLOBAL OVERVIEW
     with tabs[0]: 
@@ -324,8 +324,13 @@ def render_funds_tab(data):
             fig_i = px.line(ts_res_i, x='Date', y='Amount', color='Domain', markers=True, title="Income Trend by Domain")
             st.plotly_chart(fig_i, use_container_width=True, key="line_trend_global_inc")
 
+        #render_flexible_plots(filt_inc, "global_inc_plots")
         render_flexible_plots(filt_inc, "global_inc_plots")
         st.dataframe(filt_inc.sort_values('Date', ascending=False), use_container_width=True)
+        
+        st.divider()
+        render_delete_interface(filt_inc, "global_income")
+        
 
     # 3. GLOBAL EXPENDITURE
     with tabs[2]: 
@@ -348,8 +353,12 @@ def render_funds_tab(data):
 
         render_flexible_plots(filt_exp, "global_exp_plots")
         st.dataframe(filt_exp.sort_values('Date', ascending=False), use_container_width=True)
+        
+        st.divider()
+        render_delete_interface(filt_exp, "global_expenditure")
 
     # 4. DOMAIN DASHBOARDS
-    dom_list = ["Car", "Cows", "Sheep", "Agri Land", "Home", "Personal", "Friends lending"]
+    dom_list = ["Loans", "EMI", "Car", "Cows", "Sheep", "Agri Land", "Home", "Personal", "Friends lending"]
     for i, d_name in enumerate(dom_list):
-        render_domain_dashboard(d_name, tabs[i+4], df_raw, start_date, end_date)
+        # Changed to i+3 so Loans maps to tabs[3], EMI to tabs[4], etc.
+        render_domain_dashboard(d_name, tabs[i+3], df_raw, start_date, end_date)
