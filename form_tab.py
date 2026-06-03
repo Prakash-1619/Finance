@@ -127,10 +127,10 @@ def render_form_tab():
         elif domain == "Loans" and trans_type in ["Expenditure"]:
             sub_category = st.selectbox("Asset Loan Against", ["Gold", "Car", "Land", "Personal", "Business"])
             extra["Principal"] = st.number_input("Loan amount", min_value=1)
-            extra["Interest Type"] = st.selectbox("Interest Type", ["Flat Rate", "Reducing Balance"])
+            extra["Interest Type"] = st.selectbox("Interest Type", ["Flat Rate", "Reducing Balance","other"])
             extra["Interest Rate/Amt"] = st.text_input("Interest Rate")
-            extra["Interest"] = st.number_input("Interest Amount", min_value=1)
-            extra["Tenure (Months)"] = st.number_input("Tenure (Months)", min_value=1)
+            extra["Interest"] = st.number_input("Interest Amount")
+            extra["Tenure (Months)"] = st.number_input("Tenure (Months)")
             extra["Loan Date"] = str(st.date_input("Loan Date", date.today()))
         elif domain == "EMI" and trans_type in ["Income", "Expenditure"]:
             sub_category = st.selectbox("Loan Type", ["Personal", "Vehicle", "Home", "Other"])
