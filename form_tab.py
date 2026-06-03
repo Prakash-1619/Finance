@@ -126,7 +126,7 @@ def render_form_tab():
             extra["Projected End Date"] = str(st.date_input("End Date", date.today()))
         elif domain == "Loans" and trans_type in ["Expenditure"]:
             sub_category = st.selectbox("Asset Loan Against", ["Gold", "Car", "Land", "Personal", "Business", "EMI","Vehicle", "Home","Other"])
-            if sub_category != "EMI"
+            if sub_category != "EMI":
                 extra["Loan Name"] = st.text_input("Loan Name")
                 extra["Principal"] = st.number_input("Loan amount", min_value=1)
                 extra["Interest Type"] = st.selectbox("Interest Type", ["Flat Rate", "Reducing Balance","other"])
