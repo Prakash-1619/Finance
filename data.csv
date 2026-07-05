@@ -32,3 +32,4 @@ Date,Transaction Type,Payment Status,Amount,Frequency,Payment App,Phone Number,B
 2026-06-03,Income,Completed / Received,10500.0,One-time,BHIM,9550927050,SBI,Shahabaaz,,Loans,Other,,"{""Loan Name"": ""Bavesh"", ""Loan amount"": ""300000"", ""Interest rate"": ""3.5""}"
 2026-06-03,Income,Completed / Received,19200.0,One-time,Super Money,9550927050,SBI,Vani,,Friends lending,,,{}
 2026-07-01,Income,Completed / Received,2000.0,One-time,PhonePe,9550927050,SBI,Babulu,,Friends lending,,,{}
+2026-07-05,Income,Completed / Received,5500.0,One-time,PhonePe,9550927050,SBI,Shahabaaz ,,Friends lending,,,{}
