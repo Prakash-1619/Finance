@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FinTrack Dashboard</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo">🏦</div>
+        <div>
+          <h1>FinTrack</h1>
+          <p>Finance dashboard</p>
+        </div>
+      </div>
+
+      <nav class="nav-menu">
+        <button class="nav-btn active" data-target="dashboard">Dashboard</button>
+        <button class="nav-btn" data-target="transactions">Transactions</button>
+        <button class="nav-btn" data-target="analytics">Analytics</button>
+      </nav>
+
+      <div class="sidebar-card">
+        <strong>Quick filters</strong>
+        <label>
+          Transaction type
+          <select id="filterType">
+            <option value="All">All</option>
+            <option value="Income">Income</option>
+            <option value="Expenditure">Expenditure</option>
+          </select>
+        </label>
+        <label>
+          Domain
+          <select id="filterDomain">
+            <option value="All">All</option>
+          </select>
+        </label>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div>
+          <h2>Welcome back</h2>
+          <p>Manage your business, farm and personal finance in one app.</p>
+        </div>
+        <div class="topbar-actions">
+          <button id="newEntryBtn">+ New transaction</button>
+        </div>
+      </header>
+
+      <section id="dashboard" class="page active">
+        <div class="grid dashboard-grid">
+          <article class="card summary-card">
+            <h3>Total Balance</h3>
+            <p id="balanceValue">₹0</p>
+          </article>
+          <article class="card summary-card">
+            <h3>Total Income</h3>
+            <p id="incomeValue">₹0</p>
+          </article>
+          <article class="card summary-card">
+            <h3>Total Expense</h3>
+            <p id="expenseValue">₹0</p>
+          </article>
+          <article class="card summary-card">
+            <h3>Transactions</h3>
+            <p id="transactionCount">0</p>
+          </article>
+        </div>
+
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Recent transactions</h3>
+              <p>Latest income and expense entries at a glance.</p>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Domain</th>
+                  <th>Category</th>
+                  <th>Amount</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody id="recentTable"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section id="transactions" class="page">
+        <div class="grid two-column">
+          <article class="card transaction-card">
+            <h3>Add transaction</h3>
+            <form id="transactionForm">
+              <div class="form-row">
+                <label>Date <input type="date" id="entryDate" required /></label>
+                <label>Type
+                  <select id="entryType" required>
+                    <option value="Income">Income</option>
+                    <option value="Expenditure">Expenditure</option>
+                  </select>
+                </label>
+              </div>
+              <div class="form-row">
+                <label>Domain
+                  <select id="entryDomain" required>
+                    <option value="Salary">Salary</option>
+                    <option value="Home">Home</option>
+                    <option value="Personal">Personal</option>
+                    <option value="Loans">Loans</option>
+                    <option value="EMI">EMI</option>
+                    <option value="Agri Land">Agri Land</option>
+                    <option value="Cows">Cows</option>
+                    <option value="Sheep">Sheep</option>
+                    <option value="Car">Car</option>
+                    <option value="Miscellaneous">Miscellaneous</option>
+                  </select>
+                </label>
+                <label>Amount <input type="number" id="entryAmount" min="1" step="0.01" required /></label>
+              </div>
+              <div class="form-row">
+                <label>Category <input type="text" id="entryCategory" placeholder="Salary, Repair, Rent" /></label>
+                <label>Description <input type="text" id="entryDescription" placeholder="Optional details" /></label>
+              </div>
+              <button type="submit" class="primary-btn">Save transaction</button>
+            </form>
+          </article>
+
+          <article class="card transaction-card">
+            <h3>All transactions</h3>
+            <div class="table-wrap small">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Domain</th>
+                    <th>Amount</th>
+                  </tr>
+                </thead>
+                <tbody id="allTransactions"></tbody>
+              </table>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="analytics" class="page">
+        <div class="grid analytics-grid">
+          <article class="card">
+            <h3>Spending distribution</h3>
+            <div id="distributionChart" class="chart-bars"></div>
+          </article>
+          <article class="card">
+            <h3>Top domains</h3>
+            <ul id="topDomains" class="top-list"></ul>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+  <script src="app.js"></script>
+</body>
+</html>
